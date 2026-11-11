@@ -1,0 +1,80 @@
+meta {
+  name: specimen-status-useSupplement
+  type: http
+  seq: 26
+}
+
+post {
+  url: {{baseUrl}}/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "url": "http://hl7.org/fhir/ValueSet/specimen-status",
+          "version": "4.0.1",
+          "name": "SpecimenStatus",
+          "title": "Specimen Status",
+          "status": "active",
+          "experimental": false,
+          "immutable": true,
+          "compose": {
+            "include": [
+              {
+                "system": "http://hl7.org/fhir/specimen-status",
+                "version": "4.0.1"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "useSupplement",
+        "valueCanonical": "http://fhir.de/CodeSystem/specimen-status-de-de|0.1.0"
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "de-DE"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "excludeNested",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      },
+      {
+        "name": "count",
+        "valueInteger": 50
+      }
+    ]
+  }
+}
+
+tests {
+  test("specimen-status useSupplement expansion includes the German designation", function() {
+    const valueSet = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(valueSet.resourceType).to.equal("ValueSet");
+    const concept = valueSet.expansion.contains.find(item => item.system === "http://hl7.org/fhir/specimen-status" && item.code === "available");
+    expect(concept).to.not.equal(undefined);
+    expect(concept.designation.some(item => item.language === "de-DE" && item.value === "Verfügbar")).to.equal(true);
+  });
+}

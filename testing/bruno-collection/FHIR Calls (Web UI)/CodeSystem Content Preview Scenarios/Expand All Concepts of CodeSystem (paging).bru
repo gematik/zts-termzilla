@@ -1,0 +1,49 @@
+meta {
+  name: Expand All Concepts of CodeSystem (paging)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/:scope/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+params:path {
+  scope: fhir
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "offset",
+        "valueInteger": 2
+      },{
+        "name": "count",
+        "valueInteger": 1
+      },
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "compose": {
+            "include": [
+              {
+                "system": "https://terminologien.bfarm.de/fhir/CodeSystem/icd10gm-para295",
+                "version": "2025"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

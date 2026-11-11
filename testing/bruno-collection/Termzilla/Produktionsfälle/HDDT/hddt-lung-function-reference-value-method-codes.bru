@@ -1,0 +1,100 @@
+meta {
+  name: hddt-lung-function-reference-value-method-codes
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "status": "active",
+          "name": "HddtLungFunctionReferenceValueMethod",
+          "id": "hddt-lung-function-reference-value-method-codes",
+          "title": "Lung Function Reference Value Method",
+          "description": "Ein ValueSet für Codes, die die Methode zur Bestimmung von Referenzwerten der Lungenfunktion angeben. Enthalten sind Codes aus dem CodeSystem _HddtLungFunctionReferenceValueMethodCodes_:\n- Personal Best (persönlicher Bestwert)\n- Vorhergesagter Wert gemäß Global Lung Initiative 2012\n- Vorhergesagter Wert gemäß Global Lung Initiative 2022\n- Sonstige\n\n--\n\nA ValueSet for codes used to specify the method used to determine lung function reference values. Included are codes from the _HddtLungFunctionReferenceValueMethodCodes_ CodeSystem:\n- Personal Best\n- Predicted Value according to Global Lung Initiative 2012\n- Predicted Value according to Global Lung Initiative 2022\n- Other",
+          "url": "https://gematik.de/fhir/hddt/ValueSet/hddt-lung-function-reference-value-method-codes",
+          "meta": {
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/shareablevalueset"
+            ]
+          },
+          "language": "en",
+          "version": "1.0.2",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-effectivePeriod",
+              "valuePeriod": {
+                "start": "2026-06-26"
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/artifact-author",
+              "valueContactDetail": {
+                "name": "gematik GmbH"
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-lastReviewDate",
+              "valueDate": "2026-06-26"
+            }
+          ],
+          "experimental": false,
+          "date": "2026-06-26",
+          "publisher": "gematik GmbH",
+          "contact": [
+            {
+              "telecom": [
+                {
+                  "system": "url",
+                  "value": "https://www.gematik.de"
+                }
+              ]
+            }
+          ],
+          "copyright": "gematik GmbH.",
+          "compose": {
+            "include": [
+              {
+                "system": "https://gematik.de/fhir/hddt/CodeSystem/hddt-lung-function-reference-value-method-codes",
+                "version": "1.0.2"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "en"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

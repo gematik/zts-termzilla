@@ -1,0 +1,50 @@
+meta {
+  name: Expand existing ValueSet (paging) - GET - preferred due to caching
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/:scope/ValueSet/$expand?offset=0&count=20&url=https://terminologien.bfarm.de/fhir/ValueSet/icd10gm-terminale-codes&valueSetVersion=2025
+  body: none
+  auth: inherit
+}
+
+params:query {
+  offset: 0
+  count: 20
+  url: https://terminologien.bfarm.de/fhir/ValueSet/icd10gm-terminale-codes
+  valueSetVersion: 2025
+}
+
+params:path {
+  scope: fhir
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "offset",
+        "valueInteger": 0
+      },{
+        "name": "count",
+        "valueInteger": 20
+      },
+      {
+        "name": "url",
+        "valueUri": "https://terminologien.bfarm.de/fhir/ValueSet/icd10gm-terminale-codes"
+      },
+      {
+        "name": "valueSetVersion",
+        "valueString": "2025"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

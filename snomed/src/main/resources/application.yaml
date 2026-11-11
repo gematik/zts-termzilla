@@ -1,0 +1,15 @@
+snomed:
+  version: @project.version@
+  start: false
+  releasefile: /path/to/snomed/releasefile.zip
+  provisionMode: supported
+  #provisionMode: predefined
+  contextExtensionInDesignations: false
+  # Disables SCG validation/term rendering while expression parsing remains available.
+  expressionProcessingEnabled: true
+  # Restricts access to concept relationships (hierarchy, attributes, MRCM) and the definition
+  # status. Implicitly disables expression processing.
+  restrictedMode: true
+  index:
+    maxCachedQueries: 1000
+    maxRamBytesMb: 500

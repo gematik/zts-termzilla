@@ -1,0 +1,80 @@
+meta {
+  name: observation-status-useSupplement
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "url": "http://hl7.org/fhir/ValueSet/observation-status",
+          "version": "4.0.1",
+          "name": "ObservationStatus",
+          "title": "Observation Status",
+          "status": "active",
+          "experimental": false,
+          "immutable": true,
+          "compose": {
+            "include": [
+              {
+                "system": "http://hl7.org/fhir/observation-status",
+                "version": "4.0.1"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "useSupplement",
+        "valueCanonical": "http://fhir.de/CodeSystem/observation-status-de-de|0.1.0"
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "de-DE"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "excludeNested",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      },
+      {
+        "name": "count",
+        "valueInteger": 50
+      }
+    ]
+  }
+}
+
+tests {
+  test("observation-status useSupplement expansion includes the German designation", function() {
+    const valueSet = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(valueSet.resourceType).to.equal("ValueSet");
+    const concept = valueSet.expansion.contains.find(item => item.system === "http://hl7.org/fhir/observation-status" && item.code === "registered");
+    expect(concept).to.not.equal(undefined);
+    expect(concept.designation.some(item => item.language === "de-DE" && item.value === "Registriert")).to.equal(true);
+  });
+}

@@ -1,0 +1,116 @@
+services:
+# If you want to use LOINC or SNOMED packages you have to build your own data container. See README for more information.
+
+#  snomed-content:
+#    container_name: snomedct-content
+#    image: # add your own image
+#    pull_policy: always
+#    volumes:
+#      - snomedct_packages:/data:ro
+#
+#  loinc_content:
+#    container_name: loinc-content
+#    image: # add your own image
+#    pull_policy: always
+#    volumes:
+#      - loinc_packages:/data:ro
+
+  fix_permissions:
+    container_name: fix-permissions
+    image: # add your own loinc image
+    pull_policy: always
+    user: root
+    # wait until data has been initialized
+    depends_on:
+      snomed-content:
+        condition: service_completed_successfully
+      loinc_content:
+        condition: service_completed_successfully
+    command: ["sh", "-c", "chown -R 10000:10000 /tmp /usr/share/terminologies/packages && cp -f /local-fhir-packages/*.tgz /usr/share/terminologies/packages/fhir/ && chown -R 10000:10000 /usr/share/terminologies/packages/fhir"]
+    volumes:
+      - enrichment_packages:/usr/share/terminologies/packages/enrichment:rw
+      - fhir_packages:/usr/share/terminologies/packages/fhir:rw
+      - "${LOCAL_FHIR_PACKAGES_DIR}:/local-fhir-packages:ro"
+#      - loinc_packages:/usr/share/terminologies/packages/loinc:rw
+#      - snomedct_packages:/usr/share/terminologies/packages/snomedct:rw
+      - temp_folder:/tmp:rw
+
+  termzilla:
+    container_name: termzilla
+    image: europe-west3-docker.pkg.dev/gematik-all-infra-prod/zts/termzilla:latest
+    pull_policy: build
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - enrichment_packages:/usr/share/terminologies/packages/enrichment:rw
+      - fhir_packages:/usr/share/terminologies/packages/fhir:rw
+#      - loinc_packages:/usr/share/terminologies/packages/loinc:rw
+#      - snomedct_packages:/usr/share/terminologies/packages/snomedct:rw
+      - temp_folder:/tmp:rw
+    # wait until data has been initialized
+    depends_on:
+#      snomed-content:
+#        condition: service_completed_successfully
+#      loinc_content:
+#        condition: service_completed_successfully
+      fix_permissions:
+        condition: service_completed_successfully
+    environment:
+      # set logging root level
+      LOG_LEVEL: "DEBUG"
+      LOGGING_LEVEL_DE_GEMATIK_ZTS: "DEBUG"
+      # set server port
+      SERVER_PORT: "8080"
+      # set server context
+      SERVER_SERVLET_CONTEXT_PATH: "/tx"
+      # customize the Capabilities URL
+      CORE_CAPABILITIES_ADVERTISEDURL: "http://localhost:8080/tx/fhir"
+      # set the management server port
+      MANAGEMENT_SERVER_PORT: "9090"
+      # Base Workdir
+      CORE_BASEWORKINGDIR: "/tmp"
+      # FHIRTerms Module Configuration
+      FHIRTERMS_START: "true"
+      FHIRTERMS_ADDITIONALRESOURCESFOLDERLOCATION: "/tmp"
+      FHIRTERMS_ENRICHMENTFOLDERLOCATION: "/usr/share/terminologies/packages/enrichment"
+      FHIRTERMS_PACKAGEFOLDERLOCATION: "/usr/share/terminologies/packages/fhir"
+      FHIRTERMS_LOADDEPENDENCIES: "false"
+      FHIRTERMS_CODESYSTEM_MAX_CONCEPT_COUNT: "0"
+      FHIRTERMS_PROVISIONMODE: "predefined"
+      FHIRTERMS_PROVISIONSETTINGSPATH: ""
+      FHIRTERMS_PACKAGEAUTODOWNLOADENABLED: "true"
+      FHIRTERMS_PACKAGESERVERCONFIG_SERVERS_0__NAME: "ZTS BfArM"
+      FHIRTERMS_PACKAGESERVERCONFIG_SERVERS_0__AUTH_TYPE: "BFARM_AUTO_TOKEN"
+      FHIRTERMS_PACKAGESERVERCONFIG_SERVERS_0__URL: "https://terminologien.bfarm.de"
+      FHIRTERMS_PACKAGESERVERCONFIG_SERVERS_0__ENDPOINTS_PACKAGEPATHPREFIX: "/packages"
+      FHIRTERMS_PACKAGESERVERCONFIG_SERVERS_0__ENDPOINTS_CATALOGPATH: "/packages/catalog"
+      FHIRTERMS_PACKAGESERVERCONFIG_SERVERS_0__PACKAGES_0: "*"
+      # Loinc Module Configuration
+#      LOINC_START: "true"
+#      LOINC_DEFAULTLANGUAGE: "de-DE"
+#      LOINC_LANGUAGES: "de-DE,de-AT,es-ES"
+#      LOINC_RFCOLLECTIONLOCATION: "/usr/share/terminologies/packages/loinc"
+#      LOINC_PROVISIONMODE: "predefined"
+      # SnomedCT Module Configuration
+#      SNOMED_START: "true"
+#      SNOMED_PROVISIONMODE: "predefined"
+#      SNOMED_RELEASEFILE: "/usr/share/terminologies/packages/snomedct/SnomedCT_Germany-EditionRelease_PRODUCTION_20260515T120000Z.zip"
+      # CORS
+      SECURITY_CORS_ALLOWED_ORIGINS: "http://localhost:8080"
+    healthcheck:
+      test: "/usr/bin/wget --no-verbose --tries=1 --spider http://localhost:9090/actuator/health/liveness"
+
+volumes:
+  fhir_packages:
+    name: tx_fhir_packages
+  enrichment_packages:
+    name: tx_enrichment_packages
+#  loinc_packages:
+#    name: tx_loinc_packages
+#  snomedct_packages:
+#    name: tx_snomedct_packages
+  temp_folder:
+    name: tx_temp_folder

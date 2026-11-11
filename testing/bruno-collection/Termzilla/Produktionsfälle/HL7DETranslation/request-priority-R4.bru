@@ -1,0 +1,82 @@
+meta {
+  name: request-priority-R4
+  type: http
+  seq: 21
+}
+
+post {
+  url: {{baseUrl}}/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "url": "http://hl7.org/fhir/ValueSet/request-priority",
+          "version": "4.0.1",
+          "name": "RequestPriority",
+          "title": "Request Priority",
+          "status": "active",
+          "experimental": false,
+          "immutable": true,
+          "compose": {
+            "include": [
+              {
+                "system": "http://hl7.org/fhir/request-priority",
+                "version": "4.0.1"
+              }
+            ]
+          },
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/valueset-supplement",
+              "valueCanonical": "http://fhir.de/CodeSystem/request-priority-de-de|0.1.0"
+            }
+          ]
+        }
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "de-DE"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "excludeNested",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      },
+      {
+        "name": "count",
+        "valueInteger": 50
+      }
+    ]
+  }
+}
+
+tests {
+  test("request-priority R4 expansion includes the German designation", function() {
+    const valueSet = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(valueSet.resourceType).to.equal("ValueSet");
+    const concept = valueSet.expansion.contains.find(item => item.system === "http://hl7.org/fhir/request-priority" && item.code === "routine");
+    expect(concept).to.not.equal(undefined);
+    expect(concept.designation.some(item => item.language === "de-DE" && item.value === "Routine")).to.equal(true);
+  });
+}

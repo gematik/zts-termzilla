@@ -1,0 +1,139 @@
+meta {
+  name: ExpandKDLLevel3
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8080/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "id": "kdl",
+          "meta": {
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/shareablevalueset"
+            ]
+          },
+          "language": "de-DE",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/artifact-author",
+              "valueContactDetail": {
+                "name": "Der Fachverband für Dokumentation und Informationsmanagement in der Medizin (DVMD)",
+                "telecom": [
+                  {
+                    "system": "email",
+                    "value": "dvmd@dvmd.de"
+                  },
+                  {
+                    "system": "url",
+                    "value": "https://www.dvmd.de"
+                  }
+                ]
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-effectivePeriod",
+              "valuePeriod": {
+                "start": "2026-01-01"
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-lastReviewDate",
+              "valueDate": "2026-01-13"
+            }
+          ],
+          "url": "http://dvmd.de/fhir/ValueSet/kdl",
+          "identifier": [
+            {
+              "use": "official",
+              "system": "urn:ietf:rfc:3986",
+              "value": "urn:oid:1.2.276.0.76.11.469"
+            }
+          ],
+          "version": "2026.0.0",
+          "name": "ValueSetKDLEbene3",
+          "title": "Dokumenten(typ)klassen Klinische Dokumentenklassen-Liste 2026",
+          "status": "active",
+          "experimental": false,
+          "date": "2026-01-01",
+          "publisher": "Der Fachverband für Dokumentation und Informationsmanagement in der Medizin (DVMD)",
+          "contact": [
+            {
+              "name": "Der Fachverband für Dokumentation und Informationsmanagement in der Medizin (DVMD)",
+              "telecom": [
+                {
+                  "system": "url",
+                  "value": "https://www.dvmd.de"
+                },
+                {
+                  "system": "email",
+                  "value": "dvmd@dvmd.de"
+                }
+              ]
+            }
+          ],
+          "description": "ValueSets sind Listen von Codes, die in einem bestimmten Kontext verwendet werden. Durch sog. &quot;Terminology-Binding&quot; können Attribute von FHIR-Ressourcen an ValueSets gebunden werden, um die Menge der zulässigen Werte für dieses Attribut einzuschränken. Dieses ValueSet enthält nur Codes der Ebene 3 (Dokumenten(typ)klassen) aus dem CodeSystem &quot;KDL&quot; und ist für Bindings an Attribute geeignet, an denen ausschließlich Dokumentenklassen erlaubt werden sollen. Beispiel: DocumentReference.type",
+          "jurisdiction": [
+            {
+              "coding": [
+                {
+                  "system": "urn:iso:std:iso:3166",
+                  "code": "DE",
+                  "display": "Germany"
+                }
+              ]
+            }
+          ],
+          "copyright": "2026 DVMD e.V.",
+          "compose": {
+            "include": [
+              {
+                "system": "http://dvmd.de/fhir/CodeSystem/kdl",
+                "version": "2026.0.0",
+                "filter": [
+                  {
+                    "property": "child",
+                    "op": "exists",
+                    "value": "false"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "de-DE"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": false
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      },
+      {
+        "name" : "count",
+        "valueInteger": 1000
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

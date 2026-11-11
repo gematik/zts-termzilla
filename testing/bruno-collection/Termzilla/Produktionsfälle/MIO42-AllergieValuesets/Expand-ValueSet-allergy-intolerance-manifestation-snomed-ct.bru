@@ -1,0 +1,237 @@
+meta {
+  name: Expand-ValueSet-allergy-intolerance-manifestation-snomed-ct
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://tx.apps.osc.fokus.fraunhofer.de/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "id": "allergy-intolerance-manifestation-snomed-ct-1-0-0",
+          "meta": {
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/shareablevalueset"
+            ]
+          },
+          "language": "de-DE",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/artifact-author",
+              "valueContactDetail": {
+                "name": "mio42 GmbH",
+                "telecom": [
+                  {
+                    "system": "url",
+                    "value": "https://www.mio42.de"
+                  },
+                  {
+                    "system": "email",
+                    "value": "hello@mio42.de"
+                  },
+                  {
+                    "system": "phone",
+                    "value": "+49 30 40 05 29 00"
+                  }
+                ]
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-effectivePeriod",
+              "valuePeriod": {
+                "start": "2026-06-04"
+              }
+            }
+          ],
+          "url": "https://fhir.kbv.de/ValueSet/KBV_VS_AllergyIntolerance_Manifestation_SNOMED_CT",
+          "version": "1.0.0",
+          "name": "KBV_VS_AllergyIntolerance_Manifestation_SNOMED_CT",
+          "title": "Allergien Überempfindlichkeitsreaktionen Manifestation",
+          "status": "active",
+          "experimental": false,
+          "date": "2026-06-04",
+          "publisher": "mio42 GmbH",
+          "contact": [
+            {
+              "telecom": [
+                {
+                  "system": "url",
+                  "value": "https://www.mio42.de"
+                },
+                {
+                  "system": "email",
+                  "value": "hello@mio42.de"
+                }
+              ]
+            }
+          ],
+          "description": "Dieses Valueset enthält Konzepte über die mögliche Manifestation von allergischen und anderen Überempfindlichkeitsreaktionen. Es erhebt keinen Anspruch auf Vollständigkeit, sondern wird bedarfsgesteuert weiterentwickelt werden.",
+          "copyright": "Die Urheberrechte für die Zusammenstellung dieses Valuesets liegen bei der mio42 GmbH.",
+          "compose": {
+            "include": [
+              {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.compose.include.copyright",
+                    "valueString": "Dieses Valueset enthält SNOMED Clinical Terms® (SNOMED CT®), die mit Genehmigung der International Health Terminology Standards Development Organisation (IHTSDO) verwendet werden. Alle Rechte vorbehalten. SNOMED CT® wurde ursprünglich vom College of American Pathologists entwickelt. 'SNOMED' und 'SNOMED CT' sind eingetragene Warenzeichen der IHTSDO. Die Implementierer dieses Artefakts müssen über die entsprechende SNOMED CT-Partnerlizenz verfügen."
+                  }
+                ],
+                "system": "http://snomed.info/sct",
+                "version": "http://snomed.info/sct/11000274103/version/20260515",
+                "concept": [
+                  {
+                    "code": "1251376007"
+                  },
+                  {
+                    "code": "39579001"
+                  },
+                  {
+                    "code": "41291007"
+                  },
+                  {
+                    "code": "195967001"
+                  },
+                  {
+                    "code": "4386001"
+                  },
+                  {
+                    "code": "271759003"
+                  },
+                  {
+                    "code": "698247007"
+                  },
+                  {
+                    "code": "410430005"
+                  },
+                  {
+                    "code": "9826008"
+                  },
+                  {
+                    "code": "49727002"
+                  },
+                  {
+                    "code": "62315008"
+                  },
+                  {
+                    "code": "702809001"
+                  },
+                  {
+                    "code": "267036007"
+                  },
+                  {
+                    "code": "43116000"
+                  },
+                  {
+                    "code": "51599000"
+                  },
+                  {
+                    "code": "36715001"
+                  },
+                  {
+                    "code": "276444007"
+                  },
+                  {
+                    "code": "725119006"
+                  },
+                  {
+                    "code": "781682005"
+                  },
+                  {
+                    "code": "418363000"
+                  },
+                  {
+                    "code": "419045004"
+                  },
+                  {
+                    "code": "45007003"
+                  },
+                  {
+                    "code": "768962006"
+                  },
+                  {
+                    "code": "247471006"
+                  },
+                  {
+                    "code": "301447009"
+                  },
+                  {
+                    "code": "422587007"
+                  },
+                  {
+                    "code": "427461000"
+                  },
+                  {
+                    "code": "271757001"
+                  },
+                  {
+                    "code": "70076002"
+                  },
+                  {
+                    "code": "91175000"
+                  },
+                  {
+                    "code": "76067001"
+                  },
+                  {
+                    "code": "73442001"
+                  },
+                  {
+                    "code": "23924001"
+                  },
+                  {
+                    "code": "126485001"
+                  },
+                  {
+                    "code": "31996006"
+                  },
+                  {
+                    "code": "422400008"
+                  },
+                  {
+                    "code": "247472004"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "de-DE"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      },
+      {
+        "name": "count",
+        "valueInteger": 1000
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

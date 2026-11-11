@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "FHIR Calls (Web UI)",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

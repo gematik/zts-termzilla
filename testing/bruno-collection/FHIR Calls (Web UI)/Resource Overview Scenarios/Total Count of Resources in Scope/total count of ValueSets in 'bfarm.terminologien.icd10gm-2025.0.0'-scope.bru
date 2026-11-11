@@ -1,0 +1,24 @@
+meta {
+  name: total count of ValueSets in 'bfarm.terminologien.icd10gm-2025.0.0'-scope
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/:scope/ValueSet?_summary=count
+  body: none
+  auth: inherit
+}
+
+params:query {
+  _summary: count
+}
+
+params:path {
+  scope: bfarm.terminologien.icd10gm-2025.0.0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

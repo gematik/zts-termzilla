@@ -1,0 +1,24 @@
+meta {
+  name: total count of ConceptMaps in 'bfarm.terminologien.icd10gm-2025.0.0'-scope
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/:scope/ConceptMap?_summary=count
+  body: none
+  auth: inherit
+}
+
+params:query {
+  _summary: count
+}
+
+params:path {
+  scope: bfarm.terminologien.icd10gm-2025.0.0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

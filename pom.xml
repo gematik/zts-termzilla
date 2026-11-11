@@ -1,0 +1,625 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>de.gematik.zts</groupId>
+  <version>1.1.0-b76</version>
+  <artifactId>termzilla</artifactId>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.2</version>
+    <relativePath/>
+  </parent>
+
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>api</module>
+    <module>common</module>
+    <module>fhir</module>
+    <module>loinc</module>
+    <module>snomed</module>
+    <module>core</module>
+    <module>testutils</module>
+    <module>testing</module>
+    <module>report-aggregate</module>
+    <!-- Weitere Module später hinzufügen -->
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <java.version>25</java.version>
+    <maven.compiler.release>${java.version}</maven.compiler.release>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <maven.compiler.spec>full</maven.compiler.spec>
+
+    <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
+    <maven.clean.plugin.version>3.5.0</maven.clean.plugin.version>
+    <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
+    <maven.dependency.plugin.version>3.9.0</maven.dependency.plugin.version>
+    <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
+    <maven.shade.plugin.version>3.6.1</maven.shade.plugin.version>
+    <maven.failsafe.plugin.version>3.6.1</maven.failsafe.plugin.version>
+    <maven.surefire.version>3.6.1</maven.surefire.version>
+    <maven.resources.plugin.version>3.5.0</maven.resources.plugin.version>
+    <maven.assembly.plugin.version>3.8.0</maven.assembly.plugin.version>
+    <maven.spotless.plugin.version>3.11.0</maven.spotless.plugin.version>
+
+    <!-- Project Infrastructure Versions-->
+    <lombok_version>1.18.48</lombok_version>
+
+    <jakarta.servlet.version>6.1.0</jakarta.servlet.version>
+
+    <!-- Testframeworks + Quality Test Versions -->
+    <assertj.version>3.27.7</assertj.version>
+    <mockito.version>5.24.0</mockito.version>
+    <awaitability.version>4.3.0</awaitability.version>
+    <webcompere.version>2.1.8</webcompere.version>
+
+    <!-- Library Versions -->
+    <semver4j.version>6.0.0</semver4j.version>
+    <commons.collection.version>4.6.0</commons.collection.version>
+    <commons.io.version>2.22.0</commons.io.version>
+    <commons.compress.version>1.28.0</commons.compress.version>
+    <hapifhir.version>8.12.1</hapifhir.version>
+    <lucene.version>10.6.0</lucene.version>
+    <jgrapht.version>1.5.3</jgrapht.version>
+    <!-- ANTLR is a dependency of Snomed ECL -->
+    <antlr.version>4.5.3</antlr.version>
+    <opencsv.version>5.12.0</opencsv.version>
+    <snomed.scg.version>4.0.0</snomed.scg.version>
+    <snomed.ecl.version>4.0.0</snomed.ecl.version>
+    <microprofile.config.version>3.1.3</microprofile.config.version>
+    <smallrye.config.version>4.2.2</smallrye.config.version>
+    <okhttp.version>5.5.1</okhttp.version>
+    <fasterxml.jackson.version>2.22.4</fasterxml.jackson.version>
+    <fasterxml.jackson.annotations.version>2.22</fasterxml.jackson.annotations.version>
+    <!-- for relocated jackson dependencies (tools.jackson.x) -->
+    <tools.jackson.version>3.2.4</tools.jackson.version>
+    <logback.version>1.6.6</logback.version>
+    <logstash.logback.version>9.0</logstash.logback.version>
+
+    <!-- Code Coverage and QS Properties -->
+    <jacoco.version>0.8.16</jacoco.version>
+    <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+    <sonar.junit.reportPaths>target/surefire-reports/</sonar.junit.reportPaths>
+    <sonar.coverage.jacoco.xmlReportPaths>
+      ${maven.multiModuleProjectDirectory}/report-aggregate/target/site/jacoco-aggregate/jacoco.xml
+    </sonar.coverage.jacoco.xmlReportPaths>
+    <sonar.coverage.exclusions>testutils/src/main/java/**,**/module-info.java,**/package-info.java</sonar.coverage.exclusions>
+    <sonar.language>java</sonar.language>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <!-- termzilla-api -->
+      <dependency>
+        <groupId>de.gematik.zts</groupId>
+        <artifactId>termzilla-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- termzilla-common -->
+      <dependency>
+        <groupId>de.gematik.zts</groupId>
+        <artifactId>termzilla-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- termzilla-fhir -->
+      <dependency>
+        <groupId>de.gematik.zts</groupId>
+        <artifactId>termzilla-fhir</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- termzilla-snomed -->
+      <dependency>
+        <groupId>de.gematik.zts</groupId>
+        <artifactId>termzilla-snomed</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- termzilla-loinc -->
+      <dependency>
+        <groupId>de.gematik.zts</groupId>
+        <artifactId>termzilla-loinc</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- termzilla-core -->
+      <dependency>
+        <groupId>de.gematik.zts</groupId>
+        <artifactId>termzilla-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- termzilla-testing -->
+      <dependency>
+        <groupId>de.gematik.zts</groupId>
+        <artifactId>termzilla-testing</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <!-- termzilla-testutils -->
+      <dependency>
+        <groupId>de.gematik.zts</groupId>
+        <artifactId>termzilla-testutils</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <!-- Pin logback -->
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-parent</artifactId>
+        <version>${logback.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+
+      <!-- Automatisierungsbibliothek zum Vermeiden von Boilerplate-Code -->
+      <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>${lombok_version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.semver4j</groupId>
+        <artifactId>semver4j</artifactId>
+        <version>${semver4j.version}</version>
+      </dependency>
+
+      <!-- HAPI-FHIR Basis-Klassen -->
+      <dependency>
+        <groupId>ca.uhn.hapi.fhir</groupId>
+        <artifactId>hapi-fhir-base</artifactId>
+        <version>${hapifhir.version}</version>
+      </dependency>
+
+      <!-- HAPI-FHIR R4 Informationsmodell -->
+      <dependency>
+        <groupId>ca.uhn.hapi.fhir</groupId>
+        <artifactId>hapi-fhir-structures-r4</artifactId>
+        <version>${hapifhir.version}</version>
+      </dependency>
+
+      <!-- HAPI-FHIR Server - REST Support -->
+      <dependency>
+        <groupId>ca.uhn.hapi.fhir</groupId>
+        <artifactId>hapi-fhir-server</artifactId>
+        <version>${hapifhir.version}</version>
+      </dependency>
+
+      <!-- HAPI-FHIR Client - REST Support -->
+      <dependency>
+        <groupId>ca.uhn.hapi.fhir</groupId>
+        <artifactId>hapi-fhir-client</artifactId>
+        <version>${hapifhir.version}</version>
+      </dependency>
+
+      <!-- Unterstützung spezieller Collection-Arten -->
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-collections4</artifactId>
+        <version>${commons.collection.version}</version>
+      </dependency>
+
+      <!-- Commons compress for archive handling -->
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-compress</artifactId>
+        <version>${commons.compress.version}</version>
+      </dependency>
+
+      <!-- Commons IO aligned with commons-compress 1.28.x to avoid runtime linkage issues -->
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>${commons.io.version}</version>
+      </dependency>
+
+      <!-- ANTLR Support -->
+      <dependency>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr4-runtime</artifactId>
+        <version>${antlr.version}</version>
+      </dependency>
+
+      <!-- JGraphT - Graphenbibliothek -->
+      <dependency>
+        <groupId>org.jgrapht</groupId>
+        <artifactId>jgrapht-core</artifactId>
+        <version>${jgrapht.version}</version>
+      </dependency>
+
+      <!-- Lucene - Volltextsuche -->
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-core</artifactId>
+        <version>${lucene.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-queryparser</artifactId>
+        <version>${lucene.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-analysis-common</artifactId>
+        <version>${lucene.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-grouping</artifactId>
+        <version>${lucene.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-backward-codecs</artifactId>
+        <version>${lucene.version}</version>
+      </dependency>
+
+      <!-- CSV Handling -->
+      <dependency>
+        <groupId>com.opencsv</groupId>
+        <artifactId>opencsv</artifactId>
+        <version>${opencsv.version}</version>
+      </dependency>
+
+
+      <!-- Servlet API -->
+      <dependency>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
+        <version>${jakarta.servlet.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- MicroProfile Config -->
+      <dependency>
+        <groupId>org.eclipse.microprofile.config</groupId>
+        <artifactId>microprofile-config-api</artifactId>
+        <version>${microprofile.config.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.smallrye.config</groupId>
+        <artifactId>smallrye-config</artifactId>
+        <version>${smallrye.config.version}</version>
+      </dependency>
+      <!-- SmallRye Config YAML Support -->
+      <dependency>
+        <groupId>io.smallrye.config</groupId>
+        <artifactId>smallrye-config-source-yaml</artifactId>
+        <version>${smallrye.config.version}</version>
+      </dependency>
+
+      <!-- SNOMED Expression handling -->
+      <dependency>
+        <groupId>org.snomed.languages</groupId>
+        <artifactId>snomed-scg-parser</artifactId>
+        <version>${snomed.scg.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.snomed.languages</groupId>
+        <artifactId>snomed-ecl-parser</artifactId>
+        <version>${snomed.ecl.version}</version>
+      </dependency>
+
+      <!-- for okhttp dependencies -->
+      <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>okhttp-jvm</artifactId>
+        <version>${okhttp.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${fasterxml.jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${fasterxml.jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${fasterxml.jackson.annotations.version}</version>
+        <scope>compile</scope>
+      </dependency>
+
+      <!-- jackson-core -->
+      <dependency>
+        <groupId>tools.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${tools.jackson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${tools.jackson.version}</version>
+      </dependency>
+
+      <!-- Logging -->
+      <dependency>
+        <groupId>net.logstash.logback</groupId>
+        <artifactId>logstash-logback-encoder</artifactId>
+        <version>${logstash.logback.version}</version>
+      </dependency>
+
+      <!-- Testing -->
+
+      <dependency>
+        <groupId>org.awaitility</groupId>
+        <artifactId>awaitility</artifactId>
+        <version>${awaitability.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${assertj.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>uk.org.webcompere</groupId>
+        <artifactId>system-stubs-core</artifactId>
+        <version>${webcompere.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>uk.org.webcompere</groupId>
+        <artifactId>system-stubs-jupiter</artifactId>
+        <version>${webcompere.version}</version>
+      </dependency>
+
+
+      <!-- CVE-2025-48924 (transitive dependency hapi-fhir-base, hapi-fhir-structures-r4, opencsv)-->
+      <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>3.21.0</version>
+      </dependency>
+
+      <!-- CVE-2025-48734 (transitive dependency opencsv and snomed-scg-parser)-->
+      <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.11.0</version>
+      </dependency>
+
+      <!-- CVE-2025-66021 (transitive dependency hapi-fhir-server)-->
+      <!-- https://mvnrepository.com/artifact/com.googlecode.owasp-java-html-sanitizer/owasp-java-html-sanitizer -->
+      <dependency>
+        <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+        <artifactId>owasp-java-html-sanitizer</artifactId>
+        <version>20260313.1</version>
+      </dependency>
+
+      <!-- CVE-2026-34483 CVE-2026-34486 CVE-2026-34487 (transitive dependency of spring-boot-starter-web) -->
+      <dependency>
+        <groupId>org.apache.tomcat.embed</groupId>
+        <artifactId>tomcat-embed-core</artifactId>
+        <version>11.0.27</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tomcat.embed</groupId>
+        <artifactId>tomcat-embed-websocket</artifactId>
+        <version>11.0.27</version>
+      </dependency>
+
+      <!-- GHSA-rcgg-9c38-7xpx (transitive dependency of hapi-fhir-base and hapi-fhir-server) -->
+      <dependency>
+        <groupId>io.opentelemetry</groupId>
+        <artifactId>opentelemetry-api</artifactId>
+        <version>1.67.0</version>
+      </dependency>
+
+      <!-- GHSA-3653-68v6-rq57 (transitive dependency of hapi-fhir-structures-r4) - we should be careful with this -->
+      <dependency>
+        <groupId>ca.uhn.hapi.fhir</groupId>
+        <artifactId>org.hl7.fhir.r4</artifactId>
+        <version>7.0.5</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>33.8.0-jre</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <!-- enable resource filtering to replace placeholders in resource files with actual values during the build process-->
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>${maven.spotless.plugin.version}</version>
+          <configuration>
+            <java>
+              <googleJavaFormat/>
+            </java>
+          </configuration>
+          <executions>
+            <execution>
+              <id>format</id>
+              <goals>
+                <goal>apply</goal>
+              </goals>
+              <phase>validate</phase>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${maven.compiler.plugin.version}</version>
+          <configuration>
+            <source>${maven.compiler.source}</source>
+            <target>${maven.compiler.target}</target>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok_version}</version>
+              </path>
+            </annotationProcessorPaths>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${maven.surefire.version}</version>
+          <configuration>
+            <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
+            <excludes>
+              <exclude>**/*LocalTest.java</exclude>
+              <exclude>**/*IT.java</exclude>
+              <exclude>**/*IntegrationTest.java</exclude>
+            </excludes>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${maven.failsafe.plugin.version}</version>
+          <configuration>
+            <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
+            <includes>
+              <include>**/*LocalTest.java</include>
+              <include>**/*IT.java</include>
+              <include>**/*IntegrationTest.java</include>
+            </includes>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>integration-test</goal>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <configuration>
+            <mainClass>de.gematik.zts.termzilla.Termzilla</mainClass>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>${maven.clean.plugin.version}</version>
+          <configuration>
+            <filesets>
+              <fileset>
+                <directory>target</directory>
+                <includes>
+                  <include>**/*</include>
+                </includes>
+              </fileset>
+            </filesets>
+          </configuration>
+        </plugin>
+
+        <!-- configuration for resource filtering, to replace placeholders in resource files with actual values during the build process -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>${maven.resources.plugin.version}</version>
+          <configuration>
+            <delimiters>
+              <delimiter>@</delimiter>
+            </delimiters>
+            <useDefaultDelimiters>false</useDefaultDelimiters>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <configuration>
+          <!-- Avoids JaCoCo "Class Too Large" Exception -->
+          <excludes>
+            <exclude>org/hl7/fhir/**</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>default-prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>default-prepare-agent-integration</id>
+            <goals>
+              <goal>prepare-agent-integration</goal>
+            </goals>
+            <configuration>
+              <append>true</append>
+            </configuration>
+          </execution>
+          <execution>
+            <id>default-report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>default-report-integration</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report-integration</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+        <version>${maven.surefire.version}</version>
+      </plugin>
+    </plugins>
+  </build>
+
+
+</project>

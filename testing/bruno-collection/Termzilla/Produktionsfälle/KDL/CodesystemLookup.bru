@@ -1,0 +1,23 @@
+meta {
+  name: CodesystemLookup
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/fhir/CodeSystem/$lookup?code=AD020201&system=http://dvmd.de/fhir/CodeSystem/kdl&version=2026.0.0
+  body: json
+  auth: inherit
+}
+
+params:query {
+  code: AD020201
+  system: http://dvmd.de/fhir/CodeSystem/kdl
+  version: 2026.0.0
+  ~property: child,parent
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

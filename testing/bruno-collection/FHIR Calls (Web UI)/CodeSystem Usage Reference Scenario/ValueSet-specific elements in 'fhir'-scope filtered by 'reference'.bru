@@ -1,0 +1,25 @@
+meta {
+  name: ValueSet-specific elements in 'fhir'-scope filtered by 'reference'
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/:scope/ValueSet?_elements=url,version,name,title&reference=http://fhir.de/CodeSystem/bfarm/icd-10-gm|2025
+  body: none
+  auth: inherit
+}
+
+params:query {
+  _elements: url,version,name,title
+  reference: http://fhir.de/CodeSystem/bfarm/icd-10-gm|2025
+}
+
+params:path {
+  scope: fhir
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

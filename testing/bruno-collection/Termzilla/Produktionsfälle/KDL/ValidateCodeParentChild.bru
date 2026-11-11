@@ -1,0 +1,24 @@
+meta {
+  name: ValidateCodeParentChild
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://localhost:8080/fhir/ValueSet/$validate-code?url=http://dvmd.de/fhir/ValueSet/kdl&system=http://dvmd.de/fhir/CodeSystem/kdl&code=AD&systemVersion=2026.0.0&valueSetVersion=2026.0.0
+  body: json
+  auth: inherit
+}
+
+params:query {
+  url: http://dvmd.de/fhir/ValueSet/kdl
+  system: http://dvmd.de/fhir/CodeSystem/kdl
+  code: AD
+  systemVersion: 2026.0.0
+  valueSetVersion: 2026.0.0
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

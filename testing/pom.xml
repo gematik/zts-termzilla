@@ -1,0 +1,99 @@
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>de.gematik.zts</groupId>
+    <artifactId>termzilla</artifactId>
+    <version>1.1.0-b76</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>termzilla-testing</artifactId>
+  <name>testing</name>
+  <description>Contains integration and end-to-end test suites for the Termzilla service.
+  </description>
+
+  <properties>
+    <sonar.junit.reportPaths>target/surefire-reports,target/failsafe-reports</sonar.junit.reportPaths>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>de.gematik.zts</groupId>
+      <artifactId>termzilla-core</artifactId>
+    </dependency>
+
+    <!-- Spring Boot Starter Web - needed for embedded server in integration tests -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- Spring Boot Starter Test -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- System.env testing-->
+    <dependency>
+      <groupId>uk.org.webcompere</groupId>
+      <artifactId>system-stubs-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>uk.org.webcompere</groupId>
+      <artifactId>system-stubs-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+
+    <!-- to reduce boilerplate code (automated getter/setter etc.) -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+    </dependency>
+
+    <!-- HAPI-FHIR Client - REST Support -->
+    <dependency>
+      <groupId>ca.uhn.hapi.fhir</groupId>
+      <artifactId>hapi-fhir-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>de.gematik.zts</groupId>
+      <artifactId>termzilla-testutils</artifactId>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <finalName>termzilla-testing</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${maven.failsafe.plugin.version}</version>
+        <configuration>
+          <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
+          <!-- disable parallel execution -->
+          <parallel>none</parallel>
+          <forkCount>1</forkCount>
+          <reuseForks>false</reuseForks>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>

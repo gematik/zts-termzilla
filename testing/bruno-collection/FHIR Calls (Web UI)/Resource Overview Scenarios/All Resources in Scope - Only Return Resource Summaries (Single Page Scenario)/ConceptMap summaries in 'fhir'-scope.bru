@@ -1,0 +1,25 @@
+meta {
+  name: ConceptMap summaries in 'fhir'-scope
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/:scope/ConceptMap?_summary=true&_count=100
+  body: none
+  auth: inherit
+}
+
+params:query {
+  _summary: true
+  _count: 100
+}
+
+params:path {
+  scope: fhir
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

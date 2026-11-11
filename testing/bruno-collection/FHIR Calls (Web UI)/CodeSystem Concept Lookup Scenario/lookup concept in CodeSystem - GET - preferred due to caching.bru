@@ -1,0 +1,51 @@
+meta {
+  name: lookup concept in CodeSystem - GET - preferred due to caching
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/:scope/CodeSystem/$lookup?system=http://fhir.de/CodeSystem/bfarm/icd-10-gm&version=2025&code=A00.1&property=child,parent,Para295,Para301
+  body: none
+  auth: none
+}
+
+params:query {
+  system: http://fhir.de/CodeSystem/bfarm/icd-10-gm
+  version: 2025
+  code: A00.1
+  property: child,parent,Para295,Para301
+}
+
+params:path {
+  scope: fhir
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "id": "lookup",
+    "parameter": [
+      {
+        "name": "system",
+        "valueUri": "http://fhir.de/CodeSystem/bfarm/icd-10-gm"
+      },
+      {
+        "name": "version",
+        "valueString": "2025"
+      },
+      {
+        "name": "code",
+        "valueCode": "A00.1"
+      },
+      {
+        "name": "property",
+        "valueCode": "child,parent,Para295,Para301"
+      }
+    ]
+  }
+}
+
+vars:pre-request {
+  scope: fhir
+}

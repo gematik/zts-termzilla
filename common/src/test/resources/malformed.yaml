@@ -1,0 +1,6 @@
+test:
+  property: value
+  invalid syntax here
+  - broken
+
+  : no key

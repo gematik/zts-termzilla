@@ -1,0 +1,65 @@
+fhirterms:
+  version: @project.version@
+  start: true
+  packageFolderLocation: /path/to/package/folder
+  loadDependencies: false
+  packageAutoDownloadEnabled: true
+
+  packageServerConfig:
+    servers:
+      - name: "ZTS BfArM"
+        url: "https://terminologien.bfarm.de"
+        auth:
+          # Compliance notice: Using BFARM_AUTO_TOKEN implies acceptance of the BfArM
+          # download conditions for protected packages:
+          # https://terminologien.bfarm.de/download-conditions.html
+          type: BFARM_AUTO_TOKEN
+        skipDeprecatedUnlistedPackageVersions: false
+        endpoints:
+          # Default endpoint layout for BfArM-like registries
+          packagePathPrefix: "/packages"
+          catalogPath: "/packages/catalog"
+        packages:
+          - "*"
+#          - "bfarm.terminologien.icd10gm@2024.0.0"
+#          - "bfarm.terminologien.ops@2024.0.0"
+
+
+### Examples
+#      - name: "FHIR Simplifier"
+#        url: "https://packages.fhir.org"
+#        auth:
+#          type: NONE
+#        skipDeprecatedUnlistedPackageVersions: true
+#        endpoints:
+#          packagePathPrefix: ""
+#          catalogPath: "/catalog"
+#        packages:
+#          - "hl7.fhir.r4.core@4.0.1"
+#      - name: "Basic Secured Registry"
+#        url: "https://simplifier.net"
+#        auth:
+#          type: BASIC
+#          user: "user"
+#          password: "password"
+#        packages:
+#          - "my.package.core@1.2.3"
+#      - name: "Bearer Secured Registry"
+#        url: "https://registry.example.org"
+#        auth:
+#          type: BEARER_TOKEN
+#          token: "<bearer-token>"
+#        packages:
+#          - "example.package@1.0.0"
+#      - name: "API Key Secured Registry"
+#        url: "https://registry.example.org"
+#        auth:
+#          type: API_KEY
+#          apiKey: "<api-key>"
+#          apiKeyHeader: "X-API-Key"
+#        packages:
+#          - "example.package@1.0.0"
+
+  #provisionMode: supported
+  provisionMode: predefined
+  #provisionSettingsPath: /Users/bha/Projects/gematik-FHIR/repo/termzilla/fhir/test-provision-settings.yaml

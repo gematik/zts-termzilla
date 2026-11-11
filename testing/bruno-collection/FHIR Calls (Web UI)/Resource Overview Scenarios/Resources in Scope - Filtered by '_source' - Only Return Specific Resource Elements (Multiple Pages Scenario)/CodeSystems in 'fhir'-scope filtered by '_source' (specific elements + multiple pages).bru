@@ -1,0 +1,26 @@
+meta {
+  name: CodeSystems in 'fhir'-scope filtered by '_source' (specific elements + multiple pages)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/:scope/CodeSystem?_elements=url,version,name&_count=2&_source=https://terminologien.bfarm.de/packages/bfarm.terminologien.icd10gm/2025.0.0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  _elements: url,version,name
+  _count: 2
+  _source: https://terminologien.bfarm.de/packages/bfarm.terminologien.icd10gm/2025.0.0
+}
+
+params:path {
+  scope: fhir
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
