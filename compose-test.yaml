@@ -37,7 +37,7 @@ services:
 
   termzilla:
     container_name: termzilla
-    image: europe-west3-docker.pkg.dev/gematik-all-infra-prod/zts/termzilla:latest
+    image: gematik1/termzilla:latest
     pull_policy: build
     build:
       dockerfile: Dockerfile
