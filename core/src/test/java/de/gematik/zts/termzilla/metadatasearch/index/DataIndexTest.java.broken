@@ -1,0 +1,64 @@
+package de.gematik.zts.termzilla.metadatasearch.index;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import lucene.metadatasearch.common.de.gematik.zts.termzilla.DataIndex;
+import configuration.de.gematik.zts.termzilla.ConfigProperties;
+import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@Slf4j
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@SpringBootTest(classes = {ConfigProperties.class})
+public class DataIndexTest {
+
+  @Autowired private ConfigProperties properties;
+  private DataIndex resourceIndex;
+
+  @BeforeAll
+  void setUp() throws Exception {}
+
+  @Test()
+  void getIndexTest() throws IOException {
+
+    resourceIndex = new DataIndex(properties.getBaseWorkingDir() + "/testindex");
+    assertTrue(resourceIndex != null, "ResourceIndex is null");
+    resourceIndex.close();
+  }
+
+  @Test
+  void createResourceIndexWriterTest() throws IOException {
+    try {
+      resourceIndex = new DataIndex(properties.getBaseWorkingDir() + "/testindex");
+      var writer = resourceIndex.createResourceIndexWriter(IndexWriterConfig.OpenMode.APPEND);
+      assertTrue(writer != null, "ResourceIndexWriter is null");
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      resourceIndex.close();
+    }
+  }
+
+  //  @ParameterizedTest(name = "[{index}] {arguments}")
+  //  @CsvSource(
+  //          value = {
+  //                  // nicht existierendes System
+  //                  "http://gitesgarnicht.de, 1.0, AAA, NIL, NIL, true, false",
+  //          },
+  //          nullValues = "NIL")
+  //  void getIndexTest(
+  //          String system,
+  //          String version,
+  //          String code,
+  //          String display,
+  //          String language,
+  //          boolean expectException,
+  //          boolean expectedResult) {
+
+}

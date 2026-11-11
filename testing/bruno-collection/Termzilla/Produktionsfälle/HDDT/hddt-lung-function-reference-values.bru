@@ -1,0 +1,114 @@
+meta {
+  name: hddt-lung-function-reference-values
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "id": "hddt-lung-function-reference-values",
+          "meta": {
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/shareablevalueset"
+            ]
+          },
+          "url": "https://gematik.de/fhir/hddt/ValueSet/hddt-lung-function-reference-values",
+          "title": "Lung Function Reference Values from LOINC",
+          "name": "HddtLungFunctionReferenceValues",
+          "description": "Dieses ValueSet ist Teil der Health Device Data Transfer Spezifikation (HDDT), die Profile, Operationen und ValueSets für den Datenaustausch zwischen \nHilfsmitteln und digitalen Gesundheitsanwendungen (DiGA) definiert.\n\nDieses ValueSet definiert die LOINC-Codes, die für Referenzwerte der Lungenfunktion verwendet werden:\n- Der Referenzwert für den _Peak Expiratory Flow_ (PEF) ist der persönliche Bestwert, den der Patient innerhalb eines bestimmten Zeitraums erreicht hat.\n- Der Referenzwert für das Forcierte Exspiratorische Volumen in 1 Sekunde (FEV1) ist in den meisten Fällen ein vorhergesagter Wert, der auf Basis der demografischen Daten des Patienten berechnet wird.\n\n--\n\nThis ValueSet is part of the Health Device Data Transfer specification (HDDT) which defines profiles, operations, and value sets \nfor sharing data between medical aids and digital health applications (DiGA). \n\nThis ValueSet defines the LOINC codes, used for lung function reference values:\n- The reference value for Peak Expiratory Flow (PEF) is the personal best value achieved by the patient within a certain time frame. \n- The reference value for Forced Expiratory Volume in 1 second (FEV1) is in most cases a predicted value, calculated based on demographic data of the patient.",
+          "language": "en",
+          "version": "1.0.2",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-effectivePeriod",
+              "valuePeriod": {
+                "start": "2026-06-26"
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/artifact-author",
+              "valueContactDetail": {
+                "name": "gematik GmbH"
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-lastReviewDate",
+              "valueDate": "2026-06-26"
+            }
+          ],
+          "status": "active",
+          "experimental": false,
+          "date": "2026-06-26",
+          "publisher": "gematik GmbH",
+          "contact": [
+            {
+              "telecom": [
+                {
+                  "system": "url",
+                  "value": "https://www.gematik.de"
+                }
+              ]
+            }
+          ],
+          "copyright": "gematik GmbH. This material contains content from [LOINC](http://loinc.org). LOINC is copyright ©1995, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at [http://loinc.org/license](http://loinc.org/license). LOINC® is a registered United States trademark of Regenstrief Institute, Inc.",
+          "compose": {
+            "include": [
+              {
+                "system": "http://loinc.org",
+                "version": "2.82",
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.compose.include.copyright",
+                    "valueString": "This material contains content from [LOINC](http://loinc.org). LOINC is copyright ©1995, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at [http://loinc.org/license](http://loinc.org/license). LOINC® is a registered United States trademark of Regenstrief Institute, Inc."
+                  }
+                ],
+                "concept": [
+                  {
+                    "code": "83368-1"
+                  },
+                  {
+                    "code": "20149-1"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "en"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

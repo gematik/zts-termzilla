@@ -1,0 +1,100 @@
+meta {
+  name: hddt-lung-function-temporary-codes
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "status": "active",
+          "name": "HddtLungFunctionTemporaryCodes",
+          "id": "hddt-lung-function-temporary-codes",
+          "title": "Lung Function Temporary Codes",
+          "description": "ValueSet für temporäre Codes, die im CodeSystem _HddtLungFunctionTemporaryCodes_ definiert sind, bis LOINC-Codes verfügbar sind.\n\n--\n\nA ValueSet for temporary codes defined in the _HddtLungFunctionTemporaryCodes_ CodeSystem until LOINC codes are available.",
+          "url": "https://gematik.de/fhir/hddt/ValueSet/hddt-lung-function-temporary-codes",
+          "meta": {
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/shareablevalueset"
+            ]
+          },
+          "language": "en",
+          "version": "1.0.2",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-effectivePeriod",
+              "valuePeriod": {
+                "start": "2026-06-26"
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/artifact-author",
+              "valueContactDetail": {
+                "name": "gematik GmbH"
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-lastReviewDate",
+              "valueDate": "2026-06-26"
+            }
+          ],
+          "experimental": false,
+          "date": "2026-06-26",
+          "publisher": "gematik GmbH",
+          "contact": [
+            {
+              "telecom": [
+                {
+                  "system": "url",
+                  "value": "https://www.gematik.de"
+                }
+              ]
+            }
+          ],
+          "copyright": "gematik GmbH",
+          "compose": {
+            "include": [
+              {
+                "system": "https://gematik.de/fhir/hddt/CodeSystem/hddt-lung-function-temporary-codes",
+                "version": "1.0.2"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "en"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

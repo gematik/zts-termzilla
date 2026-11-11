@@ -1,0 +1,49 @@
+meta {
+  name: Expand Child Concepts of Concept in Hierarchical CodeSystem (no paging)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/:scope/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+params:path {
+  scope: fhir
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "compose": {
+            "include": [
+              {
+                "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+                "version": "2025",
+                "filter": [
+                  {
+                    "property": "parent",
+                    "op": "=",
+                    "value": "A00-A09"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

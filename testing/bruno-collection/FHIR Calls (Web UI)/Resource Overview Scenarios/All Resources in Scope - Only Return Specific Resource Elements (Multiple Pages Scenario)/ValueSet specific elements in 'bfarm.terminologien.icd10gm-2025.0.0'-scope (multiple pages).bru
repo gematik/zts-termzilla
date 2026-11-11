@@ -1,0 +1,25 @@
+meta {
+  name: ValueSet specific elements in 'bfarm.terminologien.icd10gm-2025.0.0'-scope (multiple pages)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/:scope/ValueSet?_elements=url,version,name&_count=2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  _elements: url,version,name
+  _count: 2
+}
+
+params:path {
+  scope: fhir
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

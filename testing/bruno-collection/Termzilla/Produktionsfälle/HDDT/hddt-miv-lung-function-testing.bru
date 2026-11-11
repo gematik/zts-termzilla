@@ -1,0 +1,129 @@
+meta {
+  name: hddt-miv-lung-function-testing
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "id": "hddt-miv-lung-function-testing",
+          "meta": {
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/shareablevalueset"
+            ]
+          },
+          "url": "https://gematik.de/fhir/hddt/ValueSet/hddt-miv-lung-function-testing",
+          "title": "MIV Lung Function Testing from LOINC",
+          "name": "HddtMivLungFunctionTesting",
+          "description": "Dieses ValueSet ist Teil der Health Device Data Transfer Spezifikation (HDDT), die Profile, Operationen und ValueSets für den Datenaustausch zwischen \nHilfsmitteln und digitalen Gesundheitsanwendungen (DiGA) definiert. Zentrales Element der HDDT-Spezifikation sind _Mandatory Interoperable Values_ (MIVs).\nMIVs sind Klassen von Messwerten, die zu definierten Anwendungsfällen und Zwecken von DiGA beitragen.\n\nDas ValueSet _HddtMivLungFunctionTesting_ definiert den Mandatory Interoperable Value (MIV) \\\"Lung Function Testing\\\". Die Definition besteht aus\n- dieser Beschreibung, die die Semantik und die bestimmenden Merkmale des MIV liefert\n- einer Menge von LOINC-Codes, die MIV-konforme Messklassifikationen entlang der LOINC-Achsen _Komponente_, _System_, _Skala_ und _Methode_ definieren\n\nDer MIV _Lung Function Testing_ umfasst Werte aus Lungenfunktionstests, die durch Ausatmen in ein handgehaltenes Peak-Flow-Meter oder Spirometer durchgeführt werden.\nDie Messungen erfolgen zweimal täglich oder häufiger, wenn dies durch den Versorgungsplan oder den Zustand des Patienten erforderlich ist.\n\nDas ValueSet für den MIV _Lung Function Testing_ enthält LOINC-Codes für die Messung des _Peak Expiratory Flow_ (PEF) und des Forcierten Exspiratorischen Volumens in 1 Sekunde (FEV1).\nEbenfalls enthalten sind LOINC-Codes für die entsprechenden Referenzwerte sowie relative Werte (z. B. _FEV1 measured/predicted_). Dieses ValueSet enthält die LOINC-Codes nicht direkt, sondern die Codes stammen aus drei separaten ValueSets:\n- HddtLungFunctionTestingValues: Codes für einzelne Lungenfunktionstests\n- HddtLungFunctionReferenceValues: Codes für Referenzwerte der Lungenfunktion\n- HddtLungFunctionRelativeValues: Codes für relative Lungenfunktionswerte, berechnet in Prozent (%)\n\n--\n\nThis ValueSet is part of the Health Device Data Transfer specification (HDDT) which defines profiles, operations, and value sets \nfor sharing data between medical aids and digital health applications (DiGA). Core of the HDDT specification are _Mandatory Interoperable \nValues_ (MIVs). MIVs are classes of measurements that contribute to defined use cases and purposes of DiGA.\n\nThis ValueSet defines the Mandatory Interoperable Value (MIV) \\\"Lung Function Testing\\\". The definition is made up from\n- this description which provides the semantics and defining characteristics of the MIV\n- a set of LOINC codes that define MIV-compliant measurement classifications along the LOINC axes _component_, _system_, _scale_ and _method_.\n\nThe MIV _Lung Function Testing_ covers values from lung function testings that are performed by exhaling air\ninto a hand-held peak flow meter or spirometer. Measurements are performed twice a day, or more frequently if required\nby the care plan or the patient's condition.\n\nThe ValueSet for the MIV _Lung Function Testing_ includes LOINC codes for measuring the Peak Expiratory Flow (PEF) and\nForced Expiratory Volume in 1 second (FEV1). Also included are LOINC codes for the corresponding reference values, and \nrelative values (e.g. FEV1 measured/predicted). This ValueSet does not include LOIC codes directly, instead the codes \ncome from three separate ValueSets:\n- HddtLungFunctionTestingValues: codes for individual lung function testings\n- HddtLungFunctionReferenceValues: codes for lung function reference values\n- HddtLungFunctionRelativeValues: codes for relative lung function values, calculated in percentages (%)",
+          "language": "en",
+          "version": "1.0.2",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-effectivePeriod",
+              "valuePeriod": {
+                "start": "2026-06-26"
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/artifact-author",
+              "valueContactDetail": {
+                "name": "gematik GmbH"
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-lastReviewDate",
+              "valueDate": "2026-06-26"
+            }
+          ],
+          "status": "active",
+          "experimental": false,
+          "date": "2026-06-26",
+          "publisher": "gematik GmbH",
+          "contact": [
+            {
+              "telecom": [
+                {
+                  "system": "url",
+                  "value": "https://www.gematik.de"
+                }
+              ]
+            }
+          ],
+          "copyright": "gematik GmbH. This material contains content from [LOINC](http://loinc.org). LOINC is copyright ©1995, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at [http://loinc.org/license](http://loinc.org/license). LOINC® is a registered United States trademark of Regenstrief Institute, Inc.",
+          "compose": {
+            "include": [
+              {
+                "valueSet": [
+                  "https://gematik.de/fhir/hddt/ValueSet/hddt-lung-function-testing-values|1.0.2"
+                ],
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.compose.include.copyright",
+                    "valueString": "This material contains content from [LOINC](http://loinc.org). LOINC is copyright ©1995, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at [http://loinc.org/license](http://loinc.org/license). LOINC® is a registered United States trademark of Regenstrief Institute, Inc."
+                  }
+                ]
+              },
+              {
+                "valueSet": [
+                  "https://gematik.de/fhir/hddt/ValueSet/hddt-lung-function-reference-values|1.0.2"
+                ],
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.compose.include.copyright",
+                    "valueString": "This material contains content from [LOINC](http://loinc.org). LOINC is copyright ©1995, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at [http://loinc.org/license](http://loinc.org/license). LOINC® is a registered United States trademark of Regenstrief Institute, Inc."
+                  }
+                ]
+              },
+              {
+                "valueSet": [
+                  "https://gematik.de/fhir/hddt/ValueSet/hddt-lung-function-relative-values|1.0.2"
+                ],
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.compose.include.copyright",
+                    "valueString": "This material contains content from [LOINC](http://loinc.org). LOINC is copyright ©1995, Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at [http://loinc.org/license](http://loinc.org/license). LOINC® is a registered United States trademark of Regenstrief Institute, Inc."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "en"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

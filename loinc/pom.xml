@@ -1,0 +1,136 @@
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>de.gematik.zts</groupId>
+    <artifactId>termzilla</artifactId>
+    <version>1.1.0-b76</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <artifactId>termzilla-loinc</artifactId>
+  <name>loinc</name>
+  <description>Provides LOINC terminology parsing, processing, indexing, and query capabilities.
+  </description>
+
+  <dependencies>
+
+    <!-- to reduce boilerplate code (automated getter/setter etc.) -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>de.gematik.zts</groupId>
+      <artifactId>termzilla-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>de.gematik.zts</groupId>
+      <artifactId>termzilla-common</artifactId>
+    </dependency>
+
+    <!-- MicroProfile Config (version managed by parent) -->
+    <dependency>
+      <groupId>org.eclipse.microprofile.config</groupId>
+      <artifactId>microprofile-config-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.smallrye.config</groupId>
+      <artifactId>smallrye-config</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.smallrye.config</groupId>
+      <artifactId>smallrye-config-source-yaml</artifactId>
+    </dependency>
+
+    <!-- JGraphT - graph library -->
+    <dependency>
+      <groupId>org.jgrapht</groupId>
+      <artifactId>jgrapht-core</artifactId>
+    </dependency>
+
+    <!-- Lucene - full text search -->
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-grouping</artifactId>
+    </dependency>
+
+    <!-- CSV Handling -->
+    <dependency>
+      <groupId>com.opencsv</groupId>
+      <artifactId>opencsv</artifactId>
+    </dependency>
+
+    <!-- Test Dependencies -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <finalName>termzilla-loinc</finalName>
+
+    <plugins>
+      <!-- build a FAT-JAR -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>${maven.assembly.plugin.version}</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <finalName>${project.artifactId}-${project.version}-all</finalName>
+          <appendAssemblyId>false</appendAssemblyId>
+          <attach>false</attach>
+          <archive>
+            <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+
+  </build>
+
+</project>

@@ -1,0 +1,25 @@
+meta {
+  name: CodeSystem specific elements in 'fhir'-scope (multiple pages)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/:scope/CodeSystem?_elements=url,version,name&_count=2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  _elements: url,version,name
+  _count: 2
+}
+
+params:path {
+  scope: fhir
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

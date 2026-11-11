@@ -1,0 +1,12 @@
+loinc:
+  version: @project.version@
+  start: false
+  defaultLanguage: de-DE
+  languages:
+    - de-DE
+    - de-AT
+    - es-ES
+
+  rfCollectionLocation: /path/to/loinc/rf-collection
+  provisionMode: supported
+  #provisionMode: predefined

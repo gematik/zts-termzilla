@@ -1,0 +1,71 @@
+@startuml
+
+participant "ValueSetResourceProvider" as VSRP
+participant "CombiningTerminologyService" as CTS
+participant "CombiningVsProvidedExpandOperation\nexpandExplicitValueSet" as CVSPEO
+participant "CombiningVsProvidedExpandOperation\nexpandValueSetInternal" as CVSPEO2
+participant "CombiningVsProvidedExpandOperation\nexpandIncludeBySystem" as CVSPEO3
+participant "CombiningVsProvidedExpandOperation\nexpandIncludeByValueSet" as CVSPEO4
+participant "FhirTermsValueSetService\nexpandInclude" as FTMVSS
+participant "FhirTermsExplicitExpandOperation\nexpandInclude" as FTEEO
+
+== /fhir/ValueSet/$expand ==
+autonumber 1 1 "<b>[00]"
+
+-> VSRP: ValueSet expandValueSet(...)
+VSRP -> VSRP: VsExpandParameter erstellen
+VSRP -> CTS: expandValueSet\n(vsExpandParameter)
+CTS -> CTS: Parameter validieren
+alt ValueSet über URL referenziert
+    CTS -> CTS: TODO
+else ValueSet in Parametern übergeben
+    CTS -> CVSPEO: expandExplicitValueSet\n(vsExpandParameter)
+    CVSPEO -> CVSPEO: Parameter validieren
+    CVSPEO -> CVSPEO: ValueSet aus Aufrufpaarameter extrahieren
+
+ end   
+    CVSPEO -> CVSPEO: Verwerfen der Bestands-Expansion
+    CVSPEO -> CVSPEO: Steuerinformationen für die Expansion \naus den Parametern extrahieren
+    CVSPEO -> CVSPEO: finalResultSet erstellen \n(SortedSet<ConceptBaseInfo>)
+
+    loop Iterieren über alle includes
+        CVSPEO -> CVSPEO2: expandValueSetInternal(...)
+        alt include mit 'system'-Element (kein 'valueSet'-Element)
+            CVSPEO2 -> CVSPEO3: **expandIncludeBySystem**\n(CombiningTerminologyService combiningTerminologyService, \nValueSet.ConceptSetComponent includeOrExclude, \nMap<String, String> systemVersionMap, \nMap<String, String> checkSystemVersionMap, \nMap<String, String> forceSystemVersionMap, \nboolean includeInactiveConcepts)
+            CVSPEO3 -> CVSPEO3: Heraussuchen des für die system-URI \nzuständigen Terminologiemanagers
+            CVSPEO3 -> FTMVSS: expandInclude()
+            FTMVSS -> FTMVSS: Vorbereiten der Ergebnisobjekte
+            FTMVSS -> FTEEO: **expandInclude**\n(ValueSet.ConceptSetComponent includeElement, \nboolean includeInactiveConcepts, \nString version, \nString checkVersion, \nString forceVersion, \nSortedSet<ConceptBaseInfo> finalResultSet, \nMultiValuedMap<Integer, ValueSet.ConceptReferenceComponent> explicitConceptReferenceMap
+            FTEEO -> FTEEO: Parameter laden (system, version)
+            FTEEO -> FTEEO: Liste möglicher CodeSystem-Ressourcen laden
+            FTEEO -> FTEEO: Bestimmen der zu verwendenden CodeSystem-Version
+            FTMVSS <-- FTEEO: **:VsExpandIncludeResult**
+            CVSPEO3 <-- FTMVSS: **:VsExpandIncludeResult**
+            CVSPEO2 <-- CVSPEO3: **:VsExpandIncludeResult**
+        else include mit einem/mehreren 'valueSet'-Elementen (kein 'system'-Element)
+            CVSPEO2 -> CVSPEO4: expandIncludeByValueSet()
+        else 3
+            CVSPEO2 -> CVSPEO3: expandIncludeBySystem()
+            CVSPEO2 -> CVSPEO4: expandIncludeByValueSet()
+            CVSPEO2 -> CVSPEO2: Ergebnisse zusammenführen
+        end    
+        CVSPEO <-- CVSPEO2: :VsExpandIncludeResult
+        CVSPEO -> CVSPEO: Ergebnisse zum \nfinalResultSet hinzufügen 
+        CVSPEO -> CVSPEO: Ergebnisse zur \nexplicitConceptReferenceMap hinzufügen 
+    end
+
+    loop Iterieren über alle excludes
+        CVSPEO -> CVSPEO2: expandValueSetInternal(...)
+        CVSPEO2 -> CVSPEO2: vgl.oben
+        CVSPEO <-- CVSPEO2: :VsExpandIncludeResult
+
+        CVSPEO -> CVSPEO: Ergebnisse vom \nfinalResultSet entfernen 
+        CVSPEO -> CVSPEO: Ergebnisse vom \nexplicitConceptReferenceMap entfernen 
+    end
+
+    CVSPEO -> CVSPEO: createExpansionElement ...
+    CTS <-- CVSPEO: :VsExpandIncludeResultValueSer
+
+
+
+@enduml

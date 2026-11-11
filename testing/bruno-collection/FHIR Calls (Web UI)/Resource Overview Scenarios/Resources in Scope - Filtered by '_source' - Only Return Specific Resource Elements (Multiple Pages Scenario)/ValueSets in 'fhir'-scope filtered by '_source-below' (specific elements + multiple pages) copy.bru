@@ -1,0 +1,26 @@
+meta {
+  name: ValueSets in 'fhir'-scope filtered by '_source:below' (specific elements + multiple pages) copy
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/:scope/ValueSet?_elements=url,version,name&_count=10&_source:below=https://terminologien.bfarm.de/packages/bfarm.terminologien.icd10gm
+  body: none
+  auth: inherit
+}
+
+params:query {
+  _elements: url,version,name
+  _count: 10
+  "_source:below": https://terminologien.bfarm.de/packages/bfarm.terminologien.icd10gm
+}
+
+params:path {
+  scope: fhir
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

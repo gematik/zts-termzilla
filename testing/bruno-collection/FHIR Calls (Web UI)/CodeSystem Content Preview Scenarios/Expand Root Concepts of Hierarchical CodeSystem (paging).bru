@@ -1,0 +1,56 @@
+meta {
+  name: Expand Root Concepts of Hierarchical CodeSystem (paging)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/:scope/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+params:path {
+  scope: fhir
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "offset",
+        "valueInteger": 2
+      },{
+        "name": "count",
+        "valueInteger": 1
+      },
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "compose": {
+            "include": [
+              {
+                "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+                "version": "2025",
+                "filter": [
+                  {
+                    "property": "parent",
+                    "op": "exists",
+                    "value": "false"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

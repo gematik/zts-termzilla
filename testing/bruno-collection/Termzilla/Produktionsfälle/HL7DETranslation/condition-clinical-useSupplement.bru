@@ -1,0 +1,80 @@
+meta {
+  name: condition-clinical-useSupplement
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "url": "http://terminology.hl7.org/ValueSet/condition-clinical",
+          "version": "4.0.1",
+          "name": "ConditionClinical",
+          "title": "Condition Clinical",
+          "status": "active",
+          "experimental": false,
+          "immutable": true,
+          "compose": {
+            "include": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                "version": "3.0.0"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "useSupplement",
+        "valueCanonical": "http://fhir.de/CodeSystem/condition-clinical-de-de|0.1.0"
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "de-DE"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "excludeNested",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      },
+      {
+        "name": "count",
+        "valueInteger": 50
+      }
+    ]
+  }
+}
+
+tests {
+  test("condition-clinical useSupplement expansion includes the German designation", function() {
+    const valueSet = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(valueSet.resourceType).to.equal("ValueSet");
+    const concept = valueSet.expansion.contains.find(item => item.system === "http://terminology.hl7.org/CodeSystem/condition-clinical" && item.code === "active");
+    expect(concept).to.not.equal(undefined);
+    expect(concept.designation.some(item => item.language === "de-DE" && item.value === "Aktiv")).to.equal(true);
+  });
+}

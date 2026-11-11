@@ -1,0 +1,717 @@
+meta {
+  name: Expand-ValueSet-allergy-intolerance-substance-snomed
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://tx.apps.osc.fokus.fraunhofer.de/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "id": "4fd7723b-601b-5717-ae79-e5d180367e16",
+          "meta": {
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/shareablevalueset"
+            ]
+          },
+          "language": "de-DE",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/artifact-author",
+              "valueContactDetail": {
+                "name": "mio42 GmbH",
+                "telecom": [
+                  {
+                    "system": "url",
+                    "value": "https://www.mio42.de"
+                  },
+                  {
+                    "system": "email",
+                    "value": "hello@mio42.de"
+                  },
+                  {
+                    "system": "phone",
+                    "value": "+49 30 40 05 29 00"
+                  }
+                ]
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-effectivePeriod",
+              "valuePeriod": {
+                "start": "2026-06-04"
+              }
+            }
+          ],
+          "url": "https://fhir.kbv.de/ValueSet/KBV_VS_AllergyIntolerance_Substance_SNOMED_CT",
+          "version": "1.0.0",
+          "name": "KBV_VS_AllergyIntolerance_Substance_SNOMED_CT",
+          "title": "Allergien Überempfindlichkeitsreaktionen Auslösende Substanz",
+          "status": "active",
+          "experimental": false,
+          "date": "2026-06-04",
+          "publisher": "mio42 GmbH",
+          "contact": [
+            {
+              "telecom": [
+                {
+                  "system": "url",
+                  "value": "https://www.mio42.de"
+                },
+                {
+                  "system": "email",
+                  "value": "hello@mio42.de"
+                }
+              ]
+            }
+          ],
+          "description": "Dieses Valueset enthält Konzepte über auslösende Substanzen von allergischen und anderen Überempfindlichkeitsreaktionen. Es erhebt keinen Anspruch auf Vollständigkeit, sondern wird bedarfsgesteuert weiterentwickelt werden.",
+          "copyright": "Die Urheberrechte für die Zusammenstellung dieses Valuesets liegen bei der mio42 GmbH.",
+          "compose": {
+            "include": [
+              {
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.compose.include.copyright",
+                    "valueString": "Dieses Valueset enthält SNOMED Clinical Terms® (SNOMED CT®), die mit Genehmigung der International Health Terminology Standards Development Organisation (IHTSDO) verwendet werden. Alle Rechte vorbehalten. SNOMED CT® wurde ursprünglich vom College of American Pathologists entwickelt. 'SNOMED' und 'SNOMED CT' sind eingetragene Warenzeichen der IHTSDO. Die Implementierer dieses Artefakts müssen über die entsprechende SNOMED CT-Partnerlizenz verfügen."
+                  }
+                ],
+                "system": "http://snomed.info/sct",
+                "version": "http://snomed.info/sct/11000274103/version/20260515",
+                "concept": [
+                  {
+                    "code": "255881006"
+                  },
+                  {
+                    "code": "788297005"
+                  },
+                  {
+                    "code": "711090003"
+                  },
+                  {
+                    "code": "256261008"
+                  },
+                  {
+                    "code": "387135004"
+                  },
+                  {
+                    "code": "256350002"
+                  },
+                  {
+                    "code": "372821002"
+                  },
+                  {
+                    "code": "386864001"
+                  },
+                  {
+                    "code": "372687004"
+                  },
+                  {
+                    "code": "387170002"
+                  },
+                  {
+                    "code": "711234000"
+                  },
+                  {
+                    "code": "121012000"
+                  },
+                  {
+                    "code": "711242004"
+                  },
+                  {
+                    "code": "735215001"
+                  },
+                  {
+                    "code": "386961008"
+                  },
+                  {
+                    "code": "256293000"
+                  },
+                  {
+                    "code": "703107005"
+                  },
+                  {
+                    "code": "256266003"
+                  },
+                  {
+                    "code": "11526002"
+                  },
+                  {
+                    "code": "387458008"
+                  },
+                  {
+                    "code": "373444002"
+                  },
+                  {
+                    "code": "146691000146104"
+                  },
+                  {
+                    "code": "387531004"
+                  },
+                  {
+                    "code": "2649007"
+                  },
+                  {
+                    "code": "255842006"
+                  },
+                  {
+                    "code": "256307007"
+                  },
+                  {
+                    "code": "288328004"
+                  },
+                  {
+                    "code": "64686009"
+                  },
+                  {
+                    "code": "387350000"
+                  },
+                  {
+                    "code": "55902002"
+                  },
+                  {
+                    "code": "256262001"
+                  },
+                  {
+                    "code": "386868003"
+                  },
+                  {
+                    "code": "256351003"
+                  },
+                  {
+                    "code": "226723006"
+                  },
+                  {
+                    "code": "288460008"
+                  },
+                  {
+                    "code": "387150008"
+                  },
+                  {
+                    "code": "228104004"
+                  },
+                  {
+                    "code": "372512008"
+                  },
+                  {
+                    "code": "143481000146109"
+                  },
+                  {
+                    "code": "387222003"
+                  },
+                  {
+                    "code": "256319004"
+                  },
+                  {
+                    "code": "227493005"
+                  },
+                  {
+                    "code": "143501000146101"
+                  },
+                  {
+                    "code": "387270009"
+                  },
+                  {
+                    "code": "372651006"
+                  },
+                  {
+                    "code": "387536009"
+                  },
+                  {
+                    "code": "387534007"
+                  },
+                  {
+                    "code": "372670001"
+                  },
+                  {
+                    "code": "372833007"
+                  },
+                  {
+                    "code": "116081000"
+                  },
+                  {
+                    "code": "256326004"
+                  },
+                  {
+                    "code": "764147003"
+                  },
+                  {
+                    "code": "255884003"
+                  },
+                  {
+                    "code": "767206002"
+                  },
+                  {
+                    "code": "259119007"
+                  },
+                  {
+                    "code": "227388008"
+                  },
+                  {
+                    "code": "372840008"
+                  },
+                  {
+                    "code": "387487009"
+                  },
+                  {
+                    "code": "395939008"
+                  },
+                  {
+                    "code": "372786004"
+                  },
+                  {
+                    "code": "54808007"
+                  },
+                  {
+                    "code": "735245003"
+                  },
+                  {
+                    "code": "255840003"
+                  },
+                  {
+                    "code": "1354800008"
+                  },
+                  {
+                    "code": "3718001"
+                  },
+                  {
+                    "code": "372584003"
+                  },
+                  {
+                    "code": "387341002"
+                  },
+                  {
+                    "code": "7034005"
+                  },
+                  {
+                    "code": "387461009"
+                  },
+                  {
+                    "code": "372682005"
+                  },
+                  {
+                    "code": "372478003"
+                  },
+                  {
+                    "code": "720687003"
+                  },
+                  {
+                    "code": "703894008"
+                  },
+                  {
+                    "code": "372658000"
+                  },
+                  {
+                    "code": "65345002"
+                  },
+                  {
+                    "code": "146651000146106"
+                  },
+                  {
+                    "code": "372694001"
+                  },
+                  {
+                    "code": "409134009"
+                  },
+                  {
+                    "code": "409149001"
+                  },
+                  {
+                    "code": "143491000146106"
+                  },
+                  {
+                    "code": "373492002"
+                  },
+                  {
+                    "code": "735971005"
+                  },
+                  {
+                    "code": "111095003"
+                  },
+                  {
+                    "code": "1354797006"
+                  },
+                  {
+                    "code": "1354798001"
+                  },
+                  {
+                    "code": "58202007"
+                  },
+                  {
+                    "code": "387475002"
+                  },
+                  {
+                    "code": "1348311005"
+                  },
+                  {
+                    "code": "38182007"
+                  },
+                  {
+                    "code": "89811004"
+                  },
+                  {
+                    "code": "7791007"
+                  },
+                  {
+                    "code": "83595008"
+                  },
+                  {
+                    "code": "256277009"
+                  },
+                  {
+                    "code": "256263006"
+                  },
+                  {
+                    "code": "256353000"
+                  },
+                  {
+                    "code": "286550009"
+                  },
+                  {
+                    "code": "372877000"
+                  },
+                  {
+                    "code": "227598003"
+                  },
+                  {
+                    "code": "288326000"
+                  },
+                  {
+                    "code": "387525002"
+                  },
+                  {
+                    "code": "138761000146100"
+                  },
+                  {
+                    "code": "387207008"
+                  },
+                  {
+                    "code": "373513008"
+                  },
+                  {
+                    "code": "426722004"
+                  },
+                  {
+                    "code": "256030008"
+                  },
+                  {
+                    "code": "373464007"
+                  },
+                  {
+                    "code": "260176001"
+                  },
+                  {
+                    "code": "47703008"
+                  },
+                  {
+                    "code": "387562000"
+                  },
+                  {
+                    "code": "42416001"
+                  },
+                  {
+                    "code": "111088007"
+                  },
+                  {
+                    "code": "395986007"
+                  },
+                  {
+                    "code": "387552007"
+                  },
+                  {
+                    "code": "421208001"
+                  },
+                  {
+                    "code": "387480006"
+                  },
+                  {
+                    "code": "386873009"
+                  },
+                  {
+                    "code": "373567002"
+                  },
+                  {
+                    "code": "710179004"
+                  },
+                  {
+                    "code": "8030004"
+                  },
+                  {
+                    "code": "735977009"
+                  },
+                  {
+                    "code": "387055000"
+                  },
+                  {
+                    "code": "387414008"
+                  },
+                  {
+                    "code": "59560006"
+                  },
+                  {
+                    "code": "767273009"
+                  },
+                  {
+                    "code": "780831000"
+                  },
+                  {
+                    "code": "372567009"
+                  },
+                  {
+                    "code": "387286002"
+                  },
+                  {
+                    "code": "256216009"
+                  },
+                  {
+                    "code": "372826007"
+                  },
+                  {
+                    "code": "386847004"
+                  },
+                  {
+                    "code": "770326002"
+                  },
+                  {
+                    "code": "373529000"
+                  },
+                  {
+                    "code": "412439003"
+                  },
+                  {
+                    "code": "51905005"
+                  },
+                  {
+                    "code": "256225003"
+                  },
+                  {
+                    "code": "372588000"
+                  },
+                  {
+                    "code": "386898005"
+                  },
+                  {
+                    "code": "43921001"
+                  },
+                  {
+                    "code": "373543005"
+                  },
+                  {
+                    "code": "13577000"
+                  },
+                  {
+                    "code": "387551000"
+                  },
+                  {
+                    "code": "387137007"
+                  },
+                  {
+                    "code": "387025007"
+                  },
+                  {
+                    "code": "395821003"
+                  },
+                  {
+                    "code": "412046002"
+                  },
+                  {
+                    "code": "387517004"
+                  },
+                  {
+                    "code": "255667006"
+                  },
+                  {
+                    "code": "735049002"
+                  },
+                  {
+                    "code": "762952008"
+                  },
+                  {
+                    "code": "410457007"
+                  },
+                  {
+                    "code": "373505007"
+                  },
+                  {
+                    "code": "372725003"
+                  },
+                  {
+                    "code": "63004003"
+                  },
+                  {
+                    "code": "387220006"
+                  },
+                  {
+                    "code": "227511008"
+                  },
+                  {
+                    "code": "372836004"
+                  },
+                  {
+                    "code": "387153005"
+                  },
+                  {
+                    "code": "227512001"
+                  },
+                  {
+                    "code": "387542008"
+                  },
+                  {
+                    "code": "28230009"
+                  },
+                  {
+                    "code": "116601002"
+                  },
+                  {
+                    "code": "387256009"
+                  },
+                  {
+                    "code": "255970007"
+                  },
+                  {
+                    "code": "227313005"
+                  },
+                  {
+                    "code": "764148008"
+                  },
+                  {
+                    "code": "256303006"
+                  },
+                  {
+                    "code": "386872004"
+                  },
+                  {
+                    "code": "226915003"
+                  },
+                  {
+                    "code": "386839004"
+                  },
+                  {
+                    "code": "387159009"
+                  },
+                  {
+                    "code": "700067006"
+                  },
+                  {
+                    "code": "54107004"
+                  },
+                  {
+                    "code": "372594008"
+                  },
+                  {
+                    "code": "260167008"
+                  },
+                  {
+                    "code": "387584000"
+                  },
+                  {
+                    "code": "28421003"
+                  },
+                  {
+                    "code": "255905003"
+                  },
+                  {
+                    "code": "19839007"
+                  },
+                  {
+                    "code": "764146007"
+                  },
+                  {
+                    "code": "11320009"
+                  },
+                  {
+                    "code": "74523009"
+                  },
+                  {
+                    "code": "363528007"
+                  },
+                  {
+                    "code": "387248006"
+                  },
+                  {
+                    "code": "767406000"
+                  },
+                  {
+                    "code": "372509005"
+                  },
+                  {
+                    "code": "387069000"
+                  },
+                  {
+                    "code": "419852003"
+                  },
+                  {
+                    "code": "373562008"
+                  },
+                  {
+                    "code": "108476002"
+                  },
+                  {
+                    "code": "386858008"
+                  },
+                  {
+                    "code": "782576004"
+                  },
+                  {
+                    "code": "387179001"
+                  },
+                  {
+                    "code": "386876001"
+                  },
+                  {
+                    "code": "256440004"
+                  },
+                  {
+                    "code": "256352005"
+                  },
+                  {
+                    "code": "412071004"
+                  },
+                  {
+                    "code": "256037006"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "de-DE"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      },
+      {
+        "name" : "count",
+        "valueInteger": 1000
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

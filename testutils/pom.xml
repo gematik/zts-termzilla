@@ -1,0 +1,85 @@
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>de.gematik.zts</groupId>
+    <artifactId>termzilla</artifactId>
+    <version>1.1.0-b76</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>termzilla-testutils</artifactId>
+  <name>testutils</name>
+  <description>Provides reusable test helpers and fixtures for module and integration tests.
+  </description>
+
+  <dependencies>
+    <!-- to reduce boilerplate code (automated getter/setter etc.) -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+    </dependency>
+
+    <!-- SLF4J API - Required for Lombok @Slf4j -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <!-- http Library -->
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp-jvm</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>ca.uhn.hapi.fhir</groupId>
+      <artifactId>hapi-fhir-structures-r4</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+
+    <!-- Archive (for ZIP file handling) -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+    </dependency>
+
+    <!-- Testing -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <finalName>termzilla-testutils</finalName>
+    <resources>
+      <!-- TODO, do we still need this? Resource filtering for version.properties
+      <resource>
+          <directory>src/main/resources</directory>
+          <filtering>true</filtering>
+          <includes>
+              <include>**/version.properties</include>
+          </includes>
+      </resource>-->
+      <!-- All other resources without filtering
+      <resource>
+          <directory>src/main/resources</directory>
+          <filtering>false</filtering>
+          <excludes>
+              <exclude>**/version.properties</exclude>
+          </excludes>
+      </resource>-->
+    </resources>
+    <plugins>
+    </plugins>
+  </build>
+
+</project>

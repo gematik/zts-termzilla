@@ -1,0 +1,144 @@
+meta {
+  name: hddt-device-type_concreteDisplay
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "id": "hddt-device-type",
+          "meta": {
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/shareablevalueset"
+            ]
+          },
+          "url": "https://gematik.de/fhir/hddt/ValueSet/hddt-device-type",
+          "title": "Device Type of personal health devices",
+          "name": "HddtDeviceType",
+          "description": "Dieses ValueSet enthält Codes zur Identifikation von _Personal Health Devices_ und _Device Data Recordern_.\n\nDie Definition dieses ValueSets ist eine Teilmenge der Definition des FHIR R5 ValueSet [Device Type](https://hl7.org/fhir/R5/valueset-device-type.html),\nangepasst für die Verwendung mit den auf FHIR R4 basierenden HDDT-Profilen.\n\nDieses Material enthält SNOMED Clinical Terms® (SNOMED CT®), die mit Genehmigung der International Health Terminology Standards Development Organisation (IHTSDO) verwendet werden.\nAlle Rechte vorbehalten. SNOMED CT® wurde ursprünglich vom College of American Pathologists entwickelt. 'SNOMED' und 'SNOMED CT' sind eingetragene Warenzeichen der IHTSDO.\n\nDieses ValueSet ist Teil der Health Device Data Transfer Spezifikation (HDDT), die Profile, Operationen und ValueSets für den Datenaustausch \nzwischen Hilfsmitteln und digitalen Gesundheitsanwendungen (DiGA) definiert. Der Inhalt des ValueSets umfasst immer mindestens alle Gerätetypen,\nfür die HDDT _Mandatory Interoperable Values_ (MIVs) definiert. Damit kann dieses ValueSet zukünftig auch Codes enthalten, die nicht Teil des FHIR ValueSet _Device Type_ sind.\n\n--\n\nThis ValueSet includes codes used to identify Personal Health Devices and Device Data Recorders.\n\nThis ValueSet's definition is a subset of the definition of the FHIR R5 ValueSet \n[Device Type](https://hl7.org/fhir/R5/valueset-device-type.html), adapted for use with the FHIR R4 based HDDT profiles. \n\nThis material includes SNOMED Clinical Terms® (SNOMED CT®) which is used by permission of the International Health Terminology Standards Development Organisation (IHTSDO).\nAll rights reserved. SNOMED CT®, was originally created by The College of American Pathologists. 'SNOMED' and 'SNOMED CT' are registered trademarks of the IHTSDO.\n\nCAVE: This ValueSet is part of the Health Device Data Transfer specification (HDDT) which defines profiles, operations, and value sets \nfor sharing data between medical aids and digital health applications (DiGA). The content of the value set will always at latest\ncover all types of device types for whoch HDDT defines _Mandatory Interoperable Values_ (MIVs). By this, this value set MAY\nin the future include codes which are not part of the FHIR ValueSet _Device Type_. ",
+          "language": "en",
+          "version": "1.0.2",
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-effectivePeriod",
+              "valuePeriod": {
+                "start": "2026-06-26"
+              }
+            },
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/artifact-author",
+              "valueContactDetail": {
+                "name": "gematik GmbH"
+              }
+            },
+          {
+              "url": "http://hl7.org/fhir/StructureDefinition/resource-lastReviewDate",
+              "valueDate": "2026-06-26"
+          }
+          ],
+          "status": "active",
+          "experimental": false,
+          "date": "2026-06-26",
+          "publisher": "gematik GmbH",
+          "contact": [
+            {
+              "telecom": [
+                {
+                  "system": "url",
+                  "value": "https://www.gematik.de"
+                }
+              ]
+            }
+          ],
+          "copyright": "The copyright for the compilation of this value set is held by gematik GmbH and by Federal Institute for Drugs and Medical Devices (BfArM). This valueset includes SNOMED Clinical Terms® (SNOMED CT®) which is used by permission of the International Health Terminology Standards Development Organisation (IHTSDO). All rights reserved. SNOMED CT®, was originally created by The College of American Pathologists. 'SNOMED' and 'SNOMED CT' are registered trademarks of the IHTSDO.",
+          "compose": {
+            "include": [
+              {
+                "system": "http://snomed.info/sct",
+                "version": "http://snomed.info/sct/11000274103/version/20251115",
+                "extension": [
+                  {
+                    "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.compose.include.copyright",
+                    "valueString": "This valueset includes SNOMED Clinical Terms® (SNOMED CT®) which is used by permission of the International Health Terminology Standards Development Organisation (IHTSDO). All rights reserved. SNOMED CT®, was originally created by The College of American Pathologists. 'SNOMED' and 'SNOMED CT' are registered trademarks of the IHTSDO."
+                  }
+                ],
+                "concept": [
+                  {
+              "code": "337414009",
+              "display": "Blood glucose meter (physical object)"
+            },
+            {
+              "code": "700585005",
+              "display": "Invasive interstitial-fluid glucose monitoring system (physical object)"
+            },
+            {
+              "code": "701815004",
+              "display": "Non-invasive interstitial-fluid glucose monitoring system (physical object)"
+            },
+            {
+              "code": "702203005",
+              "display": "Invasive interstitial fluid glucose monitoring/insulin infusion system (physical object)"
+            },
+            {
+              "code": "463729000",
+              "display": "Point-of-care blood glucose continuous monitoring system (physical object)"
+            },
+            {
+              "code": "701750003",
+              "display": "Subcutaneous glucose sensor (physical object)"
+            },
+            {
+              "code": "70665002",
+              "display": "Blood pressure cuff, device (physical object)"
+            },
+            {
+              "code": "334990001",
+              "display": "Peak flow meter (physical object)"
+            },
+            {
+              "code": "303501006",
+              "display": "Spirometer (physical object)"
+            }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "en"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

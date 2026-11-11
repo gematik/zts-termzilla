@@ -1,0 +1,24 @@
+meta {
+  name: total count of ValueSets in 'fhir'-scope
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/:scope/ValueSet?_summary=count
+  body: none
+  auth: inherit
+}
+
+params:query {
+  _summary: count
+}
+
+params:path {
+  scope: fhir
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

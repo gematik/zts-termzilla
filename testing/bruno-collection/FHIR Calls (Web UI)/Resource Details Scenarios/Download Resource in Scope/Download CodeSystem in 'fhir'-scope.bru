@@ -1,0 +1,21 @@
+meta {
+  name: Download CodeSystem in 'fhir'-scope
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/:scope/CodeSystem/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 7c1093ff-a81c-5cea-8e39-2c8beb34b447
+  scope: fhir
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

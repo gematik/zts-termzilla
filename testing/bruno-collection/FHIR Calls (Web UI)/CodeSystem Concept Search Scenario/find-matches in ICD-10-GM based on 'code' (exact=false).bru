@@ -1,0 +1,49 @@
+meta {
+  name: find-matches in ICD-10-GM based on 'code' (exact=false)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/:scope/CodeSystem/$find-matches
+  body: json
+  auth: none
+}
+
+params:path {
+  scope: fhir
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "id": "find-matches",
+    "parameter": [
+      {
+        "name": "system",
+        "valueUri": "http://fhir.de/CodeSystem/bfarm/icd-10-gm"
+      },
+      {
+        "name": "version",
+        "valueString": "2025"
+      },
+      {
+        "name": "exact",
+        "valueBoolean": false
+      },
+      {
+        "name": "property",
+        "part": [
+          {
+            "name": "code",
+            "valueCode": "code"
+          },
+          {
+            "name": "value",
+            "valueCode": "A00"
+          }
+        ]
+      }
+    ]
+  }
+}

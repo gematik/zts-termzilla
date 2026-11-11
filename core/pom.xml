@@ -1,0 +1,138 @@
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>de.gematik.zts</groupId>
+    <artifactId>termzilla</artifactId>
+    <version>1.1.0-b76</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>termzilla-core</artifactId>
+  <name>core</name>
+  <description>Assembles terminology modules and exposes the Spring Boot runtime service.
+  </description>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>de.gematik.zts</groupId>
+      <artifactId>termzilla-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>de.gematik.zts</groupId>
+      <artifactId>termzilla-fhir</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>de.gematik.zts</groupId>
+      <artifactId>termzilla-loinc</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>de.gematik.zts</groupId>
+      <artifactId>termzilla-snomed</artifactId>
+    </dependency>
+
+    <!-- Spring Boot Starter -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- for actuator endpoints -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+    <!-- Test Dependencies -->
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Caffeine Cache (standalone, not via Spring) -->
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+    </dependency>
+
+    <!-- Servlet API -->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+    </dependency>
+
+    <!-- Automatisierungsbibliothek zum Vermeiden von Boilerplate-Code -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+    </dependency>
+
+    <!-- HAPI -->
+    <dependency>
+      <groupId>ca.uhn.hapi.fhir</groupId>
+      <artifactId>hapi-fhir-server</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>ca.uhn.hapi.fhir</groupId>
+      <artifactId>hapi-fhir-client</artifactId>
+    </dependency>
+
+    <!-- Logging -->
+    <dependency>
+      <groupId>org.codehaus.janino</groupId>
+      <artifactId>janino</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.logstash.logback</groupId>
+      <artifactId>logstash-logback-encoder</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>tools.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+    </dependency>
+
+
+  </dependencies>
+
+  <build>
+    <finalName>termzilla-core</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>de.gematik.zts.termzilla.Termzilla</mainClass>
+          <!-- Create executable JAR with classifier, keep normal JAR for Maven dependencies -->
+          <classifier>exec</classifier>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

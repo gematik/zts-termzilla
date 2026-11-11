@@ -1,0 +1,434 @@
+@startuml TX - FHIR Terminology Server Architecture
+
+!define CORE_COLOR #E3F2FD
+!define API_COLOR #FFF3E0
+!define SNOMED_COLOR #E8F5E9
+!define LOINC_COLOR #FCE4EC
+!define COMMON_COLOR #F3E5F5
+!define FHIR_COLOR #FFF9C4
+
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+' ============================================
+' MODULE STRUCTURE
+' ============================================
+
+package "tx-core" CORE_COLOR {
+
+    ' Spring Boot Entry Point
+    class Termzilla <<SpringBootApplication>> {
+        +main(args: String[])
+        +fhirServletRegistrationBean(): ServletRegistrationBean
+        +bypassFhirFilterRegistration(): FilterRegistrationBean
+    }
+
+    ' HAPI FHIR Server
+    class TerminologyServer <<RestfulServer>> {
+        -properties: ConfigProperties
+        +initialize()
+        +registerProviders()
+        +configureCORS()
+    }
+
+    ' Central Orchestrator
+    class CombiningTerminologyService {
+        -terminologyManagers: Map<String, TerminologyManager>
+        -csManagers: Map<String, TerminologyManager>
+        -vsManagers: Map<String, TerminologyManager>
+        -cmManagers: Map<String, TerminologyManager>
+        -metadataIndex: DataIndex
+        +loadProviders()
+        +getManagerForCodeSystem(url): TerminologyManager
+        +getManagerForValueSet(url): TerminologyManager
+        +searchCodeSystems(params): Bundle
+        +searchValueSets(params): Bundle
+    }
+
+    package "FHIR Resource Providers" {
+        class CodeSystemResourceProvider <<@RestController>> {
+            +read(id: IdType): CodeSystem
+            +search(params): Bundle
+            +lookup(params): Parameters
+            +validateCode(params): Parameters
+            +findMatches(params): Parameters
+        }
+
+        class ValueSetResourceProvider <<@RestController>> {
+            +read(id: IdType): ValueSet
+            +search(params): Bundle
+            +expand(params): ValueSet
+            +validateCode(params): Parameters
+        }
+
+        class ConceptMapResourceProvider <<@RestController>> {
+            +read(id: IdType): ConceptMap
+            +search(params): Bundle
+        }
+
+        class TxCapabilityStatementProvider {
+            +getServerConformance(): CapabilityStatement
+        }
+    }
+
+    package "Operations" {
+        class CombiningVsExpandOperation {
+            +expand(valueSet, params): ValueSet
+        }
+
+        class CombiningVsSearchOperation {
+            +search(params): Bundle
+        }
+
+        class CombiningCsSearchOperation {
+            +search(params): Bundle
+        }
+    }
+
+    package "Tools" {
+        class Expander {
+            +expandExpressionConstraint(ecl): List<Concept>
+            +exportToCsv(concepts, path)
+        }
+
+        class SnomedOrganizer {
+            +generateEmbeddingText(concept): String
+        }
+
+        class LoincOrganizer {
+            +generateEmbeddingText(concept): String
+        }
+
+        class TermProcessing {
+            +enrichEdqmMapping(mapping): ConceptMap
+        }
+    }
+}
+
+package "tx-api" API_COLOR {
+
+    interface TerminologyProvider <<SPI>> {
+        +getTerminologyManager(): TerminologyManager
+        +isAvailable(): boolean
+    }
+
+    interface TerminologyManager {
+        +getCodeSystemService(): CodeSystemSvcInterface
+        +getValueSetService(): ValueSetSvcInterface
+        +getConceptMapService(): ConceptMapSvcInterface
+        +getSupportedCodeSystems(): List<String>
+        +getSupportedValueSets(): List<String>
+    }
+
+    interface CodeSystemSvcInterface {
+        +getCodeSystem(url): CodeSystem
+        +lookup(code, system, version): Parameters
+        +validateCode(code, system, version): Parameters
+        +subsumes(codeA, codeB, system): Parameters
+    }
+
+    interface ValueSetSvcInterface {
+        +getValueSet(url): ValueSet
+        +expand(valueSet, params): ValueSet
+        +validateCode(code, valueSet): Parameters
+    }
+
+    interface ConceptMapSvcInterface {
+        +getConceptMap(url): ConceptMap
+        +translate(code, source, target): Parameters
+    }
+
+    package "Exceptions" {
+        class InvalidConfigurationException
+        class UnknownConceptException
+        class InactiveConceptException
+        class UnsupportedTerminologyException
+        class ProviderNotFoundException
+    }
+}
+
+package "tx-snomed" SNOMED_COLOR {
+
+    class SnomedTerminologyProvider {
+        +getTerminologyManager(): SnomedTerminologyManager
+    }
+
+    class SnomedTerminologyManager {
+        -snomed: Snomed
+        +getCodeSystemService(): SnomedCodeSystemService
+        +getValueSetService(): SnomedValueSetService
+        +getConceptMapService(): SnomedConceptMapService
+    }
+
+    class Snomed {
+        -versions: Map<String, SnomedInMemoryRepresentation>
+        -defaultVersion: String
+        +getConcept(conceptId, version): Concept
+        +getDescription(descriptionId): Description
+        +getRelationships(conceptId): List<Relationship>
+        +resolveECL(expression, version): Set<ConceptId>
+    }
+
+    class SnomedInMemoryRepresentation {
+        -concepts: Map<ConceptId, Concept>
+        -descriptions: Map<DescriptionId, Description>
+        -relationships: List<Relationship>
+        +loadRF2Files(path)
+        +getConcept(id): Concept
+        +getDescriptions(conceptId): List<Description>
+    }
+
+    class SnomedGraphRepresentation {
+        -graph: DirectedGraph<ConceptId, Edge>
+        +buildHierarchy(concepts, relationships)
+        +isSubsumedBy(conceptA, conceptB): boolean
+        +getAncestors(conceptId): Set<ConceptId>
+        +getDescendants(conceptId): Set<ConceptId>
+    }
+
+    class SnomedIndex {
+        -indexWriter: IndexWriter
+        -indexSearcher: IndexSearcher
+        +indexConcepts(concepts)
+        +search(query, language): List<Concept>
+        +findByTerm(term): List<Concept>
+    }
+
+    class SnomedCodeSystemService {
+        +lookup(code): Parameters
+        +validateCode(code): Parameters
+        +subsumes(codeA, codeB): Parameters
+    }
+
+    class SnomedValueSetService {
+        +expand(valueSet): ValueSet
+        +validateCode(code, valueSet): Parameters
+    }
+
+    class SnomedConceptMapService {
+        +getConceptMap(url): ConceptMap
+    }
+}
+
+package "tx-loinc" LOINC_COLOR {
+
+    class LoincTerminologyProvider {
+        +getTerminologyManager(): LoincTerminologyManager
+    }
+
+    class LoincTerminologyManager {
+        -loinc: Loinc
+        +getCodeSystemService(): LoincCodeSystemService
+        +getValueSetService(): LoincValueSetService
+        +getConceptMapService(): LoincConceptMapService
+    }
+
+    class Loinc {
+        -versions: Map<String, LoincInMemoryRepresentation>
+        -defaultVersion: String
+        +getConcept(loincNum, version): LoincConcept
+        +getParts(loincNum): List<Part>
+        +getAnswers(loincNum): AnswerList
+        +searchByTerm(term, language): List<LoincConcept>
+    }
+
+    class LoincInMemoryRepresentation {
+        -concepts: Map<String, LoincConcept>
+        -parts: Map<String, Part>
+        -answers: Map<String, Answer>
+        -answerLists: Map<String, AnswerList>
+        -hierarchies: List<Hierarchy>
+        +loadFromCSV(path)
+        +getConcept(loincNum): LoincConcept
+    }
+
+    class LoincIndex {
+        -indexWriter: IndexWriter
+        -indexSearcher: IndexSearcher
+        +indexConcepts(concepts)
+        +search(query, language): List<LoincConcept>
+        +findByTerm(term): List<LoincConcept>
+    }
+
+    class LoincCodeSystemService {
+        +lookup(code): Parameters
+        +validateCode(code): Parameters
+    }
+
+    class LoincValueSetService {
+        +expand(valueSet): ValueSet
+        +validateCode(code, valueSet): Parameters
+    }
+
+    class LoincConceptMapService {
+        +getConceptMap(url): ConceptMap
+    }
+}
+
+package "tx-common" COMMON_COLOR {
+
+    package "Metadata Search" {
+        class DataIndex {
+            -indexWriter: IndexWriter
+            -analyzer: Analyzer
+            +indexResource(resource: Resource)
+            +commit()
+        }
+
+        class Search {
+            -indexSearcher: IndexSearcher
+            +search(query, fieldName): List<Document>
+            +searchCodeSystems(params): List<CodeSystem>
+            +searchValueSets(params): List<ValueSet>
+        }
+
+        class FhirStringAnalyzerSingleToken
+        class FhirStringAnalyzerMultipleToken
+    }
+
+    package "Utilities" {
+        class FhirHelper {
+            +createCodeSystem(params): CodeSystem
+            +createValueSet(params): ValueSet
+            +addDesignation(concept, designation)
+        }
+
+        class ConfigManager {
+            +getConfiguration(name): Configuration
+            +getProperty(key): String
+        }
+
+        class Validator {
+            +validateExpansionParams(params): boolean
+            +validateSearchParams(params): boolean
+        }
+    }
+}
+
+package "tx-fhir" FHIR_COLOR {
+    class FhirTermConstants {
+        +SNOMED_SYSTEM_URL: String
+        +LOINC_SYSTEM_URL: String
+        +DEFAULT_LANGUAGE: String
+    }
+
+    class FhirConfigProperties {
+        -propertyConfig: Configuration
+        +getCodeSystemUrl(name): String
+        +getValueSetUrl(name): String
+    }
+}
+
+' ============================================
+' RELATIONSHIPS
+' ============================================
+
+' Core relationships
+Termzilla --> TerminologyServer : creates
+TerminologyServer --> CodeSystemResourceProvider : registers
+TerminologyServer --> ValueSetResourceProvider : registers
+TerminologyServer --> ConceptMapResourceProvider : registers
+TerminologyServer --> TxCapabilityStatementProvider : registers
+
+CodeSystemResourceProvider --> CombiningTerminologyService : uses
+ValueSetResourceProvider --> CombiningTerminologyService : uses
+ConceptMapResourceProvider --> CombiningTerminologyService : uses
+
+CombiningTerminologyService --> CombiningVsExpandOperation : delegates
+CombiningTerminologyService --> CombiningVsSearchOperation : delegates
+CombiningTerminologyService --> CombiningCsSearchOperation : delegates
+
+CombiningTerminologyService --> DataIndex : uses
+CombiningTerminologyService --> Search : uses
+
+' SPI Pattern
+CombiningTerminologyService ..> TerminologyProvider : discovers via SPI
+CombiningTerminologyService o-- TerminologyManager : manages *
+
+' API interfaces
+TerminologyProvider ..> TerminologyManager : provides
+TerminologyManager --> CodeSystemSvcInterface : provides
+TerminologyManager --> ValueSetSvcInterface : provides
+TerminologyManager --> ConceptMapSvcInterface : provides
+
+' SNOMED implementation
+SnomedTerminologyProvider ..|> TerminologyProvider
+SnomedTerminologyProvider --> SnomedTerminologyManager : provides
+SnomedTerminologyManager ..|> TerminologyManager
+SnomedTerminologyManager --> Snomed : uses
+SnomedTerminologyManager --> SnomedCodeSystemService : provides
+SnomedTerminologyManager --> SnomedValueSetService : provides
+SnomedTerminologyManager --> SnomedConceptMapService : provides
+
+SnomedCodeSystemService ..|> CodeSystemSvcInterface
+SnomedValueSetService ..|> ValueSetSvcInterface
+SnomedConceptMapService ..|> ConceptMapSvcInterface
+
+Snomed o-- SnomedInMemoryRepresentation : manages versions
+Snomed --> SnomedGraphRepresentation : uses
+Snomed --> SnomedIndex : uses
+SnomedGraphRepresentation --> SnomedInMemoryRepresentation : reads from
+
+' LOINC implementation
+LoincTerminologyProvider ..|> TerminologyProvider
+LoincTerminologyProvider --> LoincTerminologyManager : provides
+LoincTerminologyManager ..|> TerminologyManager
+LoincTerminologyManager --> Loinc : uses
+LoincTerminologyManager --> LoincCodeSystemService : provides
+LoincTerminologyManager --> LoincValueSetService : provides
+LoincTerminologyManager --> LoincConceptMapService : provides
+
+LoincCodeSystemService ..|> CodeSystemSvcInterface
+LoincValueSetService ..|> ValueSetSvcInterface
+LoincConceptMapService ..|> ConceptMapSvcInterface
+
+Loinc o-- LoincInMemoryRepresentation : manages versions
+Loinc --> LoincIndex : uses
+
+' Common utilities usage
+SnomedIndex --> FhirStringAnalyzerSingleToken : uses
+LoincIndex --> FhirStringAnalyzerMultipleToken : uses
+SnomedTerminologyManager --> ConfigManager : uses
+LoincTerminologyManager --> ConfigManager : uses
+
+' Tools
+Expander --> Snomed : uses
+SnomedOrganizer --> Snomed : uses
+LoincOrganizer --> Loinc : uses
+TermProcessing --> SnomedCodeSystemService : uses
+
+' FHIR constants
+SnomedCodeSystemService --> FhirTermConstants : uses
+LoincCodeSystemService --> FhirTermConstants : uses
+FhirConfigProperties --> ConfigManager : uses
+
+note right of CombiningTerminologyService
+  **Orchestrator Pattern**
+  - Discovers all TerminologyProvider via SPI
+  - Routes requests to appropriate manager
+  - Aggregates exceptions (returns success if any provider succeeds)
+  - Maintains metadata search index across all terminologies
+end note
+
+note right of Snomed
+  **Three-Layer Architecture**
+  1. Memory: RF2 files → In-memory structures
+  2. Graph: JGraphT hierarchy for subsumption
+  3. Index: Lucene for full-text search
+end note
+
+note right of Loinc
+  **Three-Layer Architecture**
+  1. Memory: CSV files → In-memory structures
+  2. Hierarchy: Parts/Answers relationships
+  3. Index: Lucene for full-text search
+end note
+
+note bottom of TerminologyProvider
+  **SPI Discovery**
+  Registered in:
+  META-INF/services/
+  de.gematik.zts.api.service.TerminologyProvider
+end note
+
+@enduml

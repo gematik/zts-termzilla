@@ -1,0 +1,80 @@
+meta {
+  name: v2-0203-useSupplement
+  type: http
+  seq: 28
+}
+
+post {
+  url: {{baseUrl}}/fhir/ValueSet/$expand
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/fhir+json
+  Accept: application/fhir+json
+}
+
+body:json {
+  {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "valueSet",
+        "resource": {
+          "resourceType": "ValueSet",
+          "url": "http://terminology.hl7.org/ValueSet/v2-0203",
+          "version": "4.0.1",
+          "name": "V20203",
+          "title": "V2 0203",
+          "status": "active",
+          "experimental": false,
+          "immutable": true,
+          "compose": {
+            "include": [
+              {
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                "version": "5.0.0"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "useSupplement",
+        "valueCanonical": "http://fhir.de/CodeSystem/v2-0203-de-de|0.1.0"
+      },
+      {
+        "name": "displayLanguage",
+        "valueCode": "de-DE"
+      },
+      {
+        "name": "includeDesignations",
+        "valueBoolean": true
+      },
+      {
+        "name": "excludeNested",
+        "valueBoolean": true
+      },
+      {
+        "name": "includeDefinition",
+        "valueBoolean": true
+      },
+      {
+        "name": "count",
+        "valueInteger": 50
+      }
+    ]
+  }
+}
+
+tests {
+  test("v2-0203 useSupplement expansion includes the German designation", function() {
+    const valueSet = res.getBody();
+    expect(res.getStatus()).to.equal(200);
+    expect(valueSet.resourceType).to.equal("ValueSet");
+    const concept = valueSet.expansion.contains.find(item => item.system === "http://terminology.hl7.org/CodeSystem/v2-0203" && item.code === "ACSN");
+    expect(concept).to.not.equal(undefined);
+    expect(concept.designation.some(item => item.language === "de-DE" && item.value === "Eingangs-ID")).to.equal(true);
+  });
+}

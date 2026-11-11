@@ -1,0 +1,186 @@
+# ========================================
+# Server Configuration
+# ========================================
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    min-response-size: 102400
+    mime-types: application/json,application/fhir+json,application/xml,application/fhir+xml
+
+# ========================================
+# Core Configuration
+# ========================================
+
+core:
+  version: @project.version@
+  baseWorkingDir: /path/to/working/directory
+  systemLanguage: de-DE
+
+  # Resource retrieval mode for search operations. When set to 'STRIPPED', the server will return only
+  # the resource metadata (without the actual content) in search results,
+  # which can improve performance and reduce bandwidth usage.
+  # Currently, CodeSystem.concept, ValueSet.compose/ValueSet.expansion and ConceptMap.group is stripped.
+  # Clients can then retrieve the full resource content using a separate read operation if needed.
+  # Set to 'FULL' to include the full resource content in search results.
+  resourceRetrievalMode: STRIPPED
+
+# ========================================
+# Security Configuration (TODO)
+# ========================================
+  security:
+    cors:
+      allowedOrigins: "http://localhost:3000,https://fragebogen.apps.osc.fokus.fraunhofer.de"
+      allowedMethods: "GET,POST,OPTIONS"
+      allowedHeaders: "*"
+      allowCredentials: true
+      exposedHeaders: "Location,Content-Location"
+    rateLimit:
+      enabled: false
+      requestsPerMinute: 100
+    request:
+      # Maximum length for individual query parameters
+      # Set to 0 to disable parameter length validation
+      maxParameterLength: 1000
+
+      # Maximum request body size in bytes (10MB)
+      # Set to 0 to disable request size validation
+      maxRequestSizeBytes: 10485760
+
+# ========================================
+# Caching Configuration
+# ========================================
+  caching:
+    # Enable Cache-Control response headers.
+    # When disabled, Cache-Control: no-store is sent instead.
+    enabled: true
+
+    # Client cache lifetime in seconds (max-age directive).
+    maxAge: 300
+
+    # Shared cache lifetime in seconds (s-maxage for nginx/CDN).
+    # Set to -1 to omit s-maxage; shared caches will then fall back to max-age.
+    sharedMaxAge: -1
+
+    # Require revalidation with the server once a cached entry has expired.
+    mustRevalidate: true
+
+    # Allow serving stale content while revalidating in the background (stale-while-revalidate).
+    # Effective for browser clients. nginx ignores this directive from upstream headers;
+    # use proxy_cache_use_stale + proxy_cache_background_update in nginx config instead.
+    # Set to -1 to omit the directive.
+    staleWhileRevalidate: -1
+
+    # CDN-optimized mode: ignores incoming Accept and Accept-Language headers,
+    # uses server defaults for format (JSON) and language.
+    # When enabled, Vary: Accept, Accept-Language is NOT sent.
+    cdnOptimized: false
+
+  paging:
+    pagingProviderSize: 1000
+    defaultPageSize: 20
+    maximumPageSize: 100
+
+# ========================================
+# Capabilities Configuration
+# ========================================
+  capabilities:
+    name: "TERMzillaTerminologyServices"
+    title: "TERMzilla Terminology Services"
+    description: "Terminology Service for FHIR Terminologies"
+    publisher: "gematik GmbH/Fraunhofer FOKUS"
+    advertisedUrl: "http://localhost:8080/fhir"
+    status: "active"
+    experimental: true
+    softwareName: "TERMzilla"
+    softwareVersion: @project.version@
+    softwareReleaseDate: @maven.build.timestamp@
+    restSecurityDescription: "No security mechanisms are enabled for this instance"
+
+# ========================================
+# Operations Configuration
+# ========================================
+  operations:
+    systemLevel:
+      batch:
+        enabled: true
+        maxBatchSize: 1000
+    codesystem:
+      read:
+        enabled: true
+      search:
+        enabled: true
+        allowedParams: "_content,_id,_lastUpdated,_profile,_security,_source,url,version,name,title,status,publisher,description,code,system,content-mode"
+        defaultSort: "url,version"
+      lookup:
+        enabled: true
+        allowedParams: "code,system,version,coding,date,displayLanguage,property"
+      validateCode:
+        enabled: true
+        allowedParams: "url,codeSystem,code,version,display,coding,codeableConcept,date,abstract,displayLanguage"
+      findMatches:
+        enabled: true
+        allowedParams: "system,version,property,exact,compositional"
+      subsumes:
+        enabled: false
+        allowedParams: "codeA,codeB,system,version,codingA,codingB"
+
+    valueset:
+      read:
+        enabled: true
+      search:
+        enabled: true
+        allowedParams: "_content,_id,_lastUpdated,_profile,_security,_source,url,version,name,title,status,publisher,description,reference,expansion"
+        defaultSort: "url,version"
+      expand:
+        enabled: true
+        allowedParams: "url,valueSet,valueSetVersion,context,contextDirection,filter,date,offset,count,includeDesignations,designation,includeDefinition,activeOnly,excludeNested,excludeNotForUI,excludePostCoordinated,displayLanguage,exclude-system,system-version,check-system-version,force-system-version,useSupplement"
+      validateCode:
+        enabled: true
+        allowedParams: "url,context,valueSet,valueSetVersion,code,system,systemVersion,display,coding,codeableConcept,date,abstract,displayLanguage,inferSystem,lenient-display-validation"
+
+    conceptmap:
+      read:
+        enabled: true
+      search:
+        enabled: true
+        allowedParams: "_content,_id,_lastUpdated,_profile,_security,_source,url,version,name,title,status,publisher,description,source,target,source-uri,target-uri,source-system,target-system"
+        defaultSort: "url,version"
+      translate:
+        enabled: false
+        allowedParams: "url,conceptMap,conceptMapVersion,code,system,version,source,coding,codeableConcept,target,targetsystem,dependency,reverse"
+      closure:
+        enabled: false
+        allowedParams: "name,concept,version"
+
+# ========================================
+# Management & Actuator Configuration
+# ========================================
+
+management:
+  server:
+    port: 9090
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,readiness,liveness
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+      group:
+        readiness:
+          include: readinessState,terminologyServer
+        liveness:
+          include: livenessState
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
