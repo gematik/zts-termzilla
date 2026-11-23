@@ -242,8 +242,6 @@ public class EclEvaluationService {
       throw new SimpleExpressionConstraintException(e.getMessage());
     }
 
-    // TODO: implement additional operators when needed.
-
     // Special case: without an operator, the expected result is the concept itself.
     // We do not directly know whether the concept is active, so we use active relations as a
     // proxy. If active relations exist, the concept is treated as active in this context.

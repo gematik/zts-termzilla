@@ -25,13 +25,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.r4.model.BooleanType;
-import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.CapabilityStatement;
-import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Enumerations;
-import org.hl7.fhir.r4.model.Extension;
 
 /**
  * Enhances the default CapabilityStatement of the server with additional information (e.g. ...) to
@@ -98,28 +94,6 @@ public final class CapabilityStatementEnhancer {
       }
     }
 
-    // Falls diese Erweiterung nicht gesetzt wird, meckert der HL7 Validator
-    Extension featureExtension1 =
-        new Extension("http://hl7.org/fhir/uv/application-feature/StructureDefinition/feature");
-    featureExtension1.addExtension(
-        new Extension(
-            "definition",
-            new CanonicalType("http://hl7.org/fhir/uv/tx-tests/FeatureDefinition/test-version")));
-
-    featureExtension1.addExtension(new Extension("value", new CodeType("1.7.6")));
-
-    // Falls diese Erweiterung nicht gesetzt wird, meckert der HL7 Validator
-    // TODO: Aktuell können wir keine CodeSystem-Parameter übergeben, da wir diese Funktionalität
-    //  noch nicht unterstützen und die Unterstützung eigentlich nicht beabsichtigen
-    Extension featureExtension2 =
-        new Extension("http://hl7.org/fhir/uv/application-feature/StructureDefinition/feature");
-    featureExtension2.addExtension(
-        new Extension(
-            "definition",
-            new CanonicalType(
-                "http://hl7.org/fhir/uv/tx-ecosystem/FeatureDefinition/CodeSystemAsParameter")));
-    featureExtension2.addExtension(new Extension("value", new BooleanType(true)));
-
     // CapabilityStatement
     capabilities
         .setName(config.getCapabilitiesName())
@@ -131,12 +105,7 @@ public final class CapabilityStatementEnhancer {
         .setKind(CapabilityStatement.CapabilityStatementKind.INSTANCE)
         .setFhirVersion(Enumerations.FHIRVersion._4_0_1)
         .setSoftware(software)
-        .setImplementation(implementation)
-    //        .setRest(List.of(rest))
-    // TODO: Wir müssen noch recherchieren, was diese Extensions bewirken (z.B. beim HL7 Validator)
-    //        .addExtension(featureExtension1)
-    //        .addExtension(featureExtension2)
-    ;
+        .setImplementation(implementation);
   }
 
   /**

@@ -90,8 +90,6 @@ public class DemisSCGProcessor {
     try {
       // Abrufen alle relevanten Domain-Rules aus dem entsprechenden RefSet
       // Versionen interessieren uns hier erstmal nicht, wir wollen einen Überblick
-      // TODO: Versionen berücksichtigen
-      // beinhaltet die im MRCMDomain RefSet abgebildeten Regeln zu Domain-Konzepten
       Set<MrcmDomainRule> domainRules = mrcmRuleService.getMrcmDomainRules(null, true);
       domainConcepts = new HashSet<>();
 
@@ -116,9 +114,6 @@ public class DemisSCGProcessor {
    */
   private String getTerm(String conceptId, SnomedReleaseVersion snomedReleaseVersion)
       throws UnknownConceptException {
-
-    // TODO: care about includeInactive
-    // TODO: care about language
 
     SnomedConcept concept =
         snomed.getSnomedConceptWithDescription(conceptId, snomedReleaseVersion, false);
@@ -513,10 +508,6 @@ public class DemisSCGProcessor {
       SnomedReleaseVersion snomedReleaseVersion)
       throws RuleValidationException, UnknownConceptException {
 
-    // TODO ruleStrengthId berücksichtigen
-    //  - 723597001=Mandatory concept model rule
-    //  - 723598006=Optional concept model rule
-
     // select all Attribute Domain Rules that might be relevant for us based on the attributeId
     Set<MrcmAttributeDomainRule> applicableAttributeDomainRules =
         mrcmRuleService.getMrcmAttributeDomainRules(snomedReleaseVersion, attributeId);
@@ -587,10 +578,6 @@ public class DemisSCGProcessor {
    */
   private Set<MrcmAttributeRangeRule> getApplicableAttributeRangeRules(
       String attributeId, SnomedReleaseVersion snomedReleaseVersion) {
-
-    // TODO ruleStrengthId berücksichtigen
-    //  - 723597001=Mandatory concept model rule
-    //  - 723598006=Optional concept model rule
 
     // select all Attribute Range Rules that might be relevant for us based on the attributeId
     Set<MrcmAttributeRangeRule> applicableAttributeRangeRules =
@@ -911,33 +898,6 @@ public class DemisSCGProcessor {
     }
   }
 
-  // TODO Requirement C.1: Attribute domains
-  // The MRCM must be able to specify the set of concepts to which a given attribute may be
-  // applied.
-
-  // TODO Requirement C.2: Attribute ranges
-  // The MRCM must be able to specify the set of concepts which may be used as the value for a
-  // given attribute.
-
-  // TODO Requirement C.3: Attribute cardinality
-  // The MRCM must be able to specify the minimum and maximum number of times that a given
-  // attribute may appear
-  // in a concept definition. Additionally, it must be able to specify the minimum and maximum
-  // number of times that a
-  // given attribute may appear in each relationship group in a concept definition.
-
-  // TODO Requirement C.4: Grouping
-  // The MRCM must be able to specify whether an attribute may or may not belong to a relationship
-  // group.
-
-  // TODO Requirement C.5: Rule strength
-  // The MRCM should indicate the strength with which each rule should be applied – for example,
-  // whether a rule is
-  // mandatory (resulting in an error), or optional (resulting in a warning).
-
-  // TODO Requirement C.6: Rule scope
-  // There should be a clear specification of which concept model rules apply to a given SNOMED CT
-  // module.
 
   /**
    * Validates an expression against SNOMED MRCM rules.
@@ -963,8 +923,6 @@ public class DemisSCGProcessor {
           UnsupportedTerminologyException {
 
     String validationHint = "";
-
-    // TODO correct handling of SNOMED versions
 
     // Fokus-Konzepte der Expression
     List<String> focusConcepts = expression.getFocusConcepts();

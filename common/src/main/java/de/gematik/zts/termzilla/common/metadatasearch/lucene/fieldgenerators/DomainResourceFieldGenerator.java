@@ -43,7 +43,6 @@ public abstract class DomainResourceFieldGenerator<R extends DomainResource>
 
     // ELEMENT: DomainResource.text [0..1] (Narrative) --> SEARCHPARAM: _text (string)
     if (!StringUtils.isEmpty(resource.getText().toString()))
-    // TODO
     {
       document.add(new TextField(NAME_TEXT, resource.getText().toString(), fieldStore));
     }

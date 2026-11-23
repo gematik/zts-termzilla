@@ -20,6 +20,7 @@
  */
 package de.gematik.zts.termzilla.terminologies.loinc.fhir;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.Enumerations;
@@ -52,18 +53,15 @@ public class LoincCodeSystemHelper {
     cs.setCompositional(false);
     cs.setVersionNeeded(false);
 
-    // TODO: change to NameBasedUUID
-    cs.setId(UUID.randomUUID().toString());
     return cs;
   }
 
   private static String generateId(String url, String version) {
-
     if (url != null) {
       // if name and version are present concat both, else just use name
       String composedId = version == null ? url : url.concat("-").concat(version);
       // create a named UUID
-      return UUID.nameUUIDFromBytes(composedId.getBytes()).toString();
+      return UUID.nameUUIDFromBytes(composedId.getBytes(StandardCharsets.UTF_8)).toString();
     }
     // neither url nor version present, use random uuid
     else {

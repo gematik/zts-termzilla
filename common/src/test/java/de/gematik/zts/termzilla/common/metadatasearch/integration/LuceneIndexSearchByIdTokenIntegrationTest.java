@@ -72,18 +72,6 @@ import org.junit.jupiter.api.Test;
  *   <li>Negation with {@code :not} modifier ({@code _id:not=id-123})
  * </ul>
  *
- * <p><b>TODO - Additional Test Cases (to be implemented after REST operation support):</b>
- *
- * <ul>
- *   <li>Test multiple IDs with OR combination (e.g., {@code _id=id-123,id-456})
- *   <li>Test multiple IDs with AND combination (multiple {@code _id} parameters)
- *   <li>Test combination of multiple {@code :not} modifiers
- *   <li>Test edge cases: empty IDs, special characters in IDs, very long IDs
- *   <li>Test exception handling: verify {@code NotImplementedException} for unsupported modifiers
- *       ({@code :missing}, {@code :text}, {@code :above}, {@code :below}, {@code :in}, {@code
- *       :not-in}, {@code :of-type})
- * </ul>
- *
  * @see IdTokenParameterQueryGenerator
  * @see ResourceFieldGeneratorHelper
  * @see InMemoryLuceneTestHelper

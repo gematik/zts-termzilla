@@ -294,9 +294,32 @@ class FhirStringAnalyzerTest {
     private final FhirStringAnalyzerMultipleToken multipleTokenAnalyzer =
         new FhirStringAnalyzerMultipleToken();
 
-    // TODO: Die  Edge Cases (leerer String, nur whitespaceds ) implementieren. Überprüfen, ob
-    // Implementierung von AnalyzerUtils
-    //  überhaupt richtig ist.
+    @Test
+    @DisplayName("Edge Case: Leerer String erzeugt keine Tokens")
+    void shouldHandleEmptyString() {
+      assertTrue(AnalyzerUtils.displayTokens(singleTokenAnalyzer, "").isEmpty());
+      assertTrue(AnalyzerUtils.displayTokens(multipleTokenAnalyzer, "").isEmpty());
+      assertEquals("", AnalyzerUtils.normalizePhrase(""));
+    }
+
+    @Test
+    @DisplayName("Edge Case: Nur Whitespace erzeugt keine Tokens")
+    void shouldHandleWhitespaceOnlyStrings() {
+      List<String> whitespaceInputs = List.of(" ", "   ", "\t", "\n", " \t\r\n ");
+
+      for (String input : whitespaceInputs) {
+        assertTrue(
+            AnalyzerUtils.displayTokens(singleTokenAnalyzer, input).isEmpty(),
+            "SingleToken Analyzer should produce no tokens for whitespace input");
+        assertTrue(
+            AnalyzerUtils.displayTokens(multipleTokenAnalyzer, input).isEmpty(),
+            "MultipleToken Analyzer should produce no tokens for whitespace input");
+        assertEquals(
+            "",
+            AnalyzerUtils.normalizePhrase(input),
+            "Normalizing whitespace-only input should return an empty string");
+      }
+    }
 
     @Test
     @DisplayName("Edge Case: Nur Sonderzeichen")

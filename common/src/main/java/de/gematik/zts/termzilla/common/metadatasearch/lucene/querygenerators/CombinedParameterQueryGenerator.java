@@ -52,21 +52,14 @@ public class CombinedParameterQueryGenerator {
 
     List<Query> queryList = new ArrayList<>();
 
-    // TODO   // Auseinandersetzen mit _content-Parameter und Aufbereiten für die Suche
-    //    // Grundsätzlich erlauben wir am _content-Parameter KEINE Modifier wie :exact, :contains
-    // etc.
-    //    // Dies wird im Zuge der Parametervalidierung geprüft. Dennoch behandeln wir in der
-    //    // Metadatensuche den _content-Parameter wie jeden anderen Parameter auch. Deshalb fügen
-    // wir ihm
-    //    // ein :contains an, um Inhalte überhaupt zu finden. Danach wird er zu den anderen
-    //    // Suchparametern geschmissen. Perspektivisch ließe sich das natürlich auch mit
-    // individuellen
-    //    // QueryGeneratoren für die einzelnen Resourcentypen abfrühstücken. Dann müsste auch kein
-    //    // content-Feld mehr erzeugt werden.
-
     // Berücksichtigen der Suchparameter
     for (ParamData paramData : paramDataList) {
-      switch (paramData.getParamQueryType()) {
+      String paramQueryType = paramData.getParamQueryType();
+      if (paramQueryType == null) {
+        throw unsupportedParameterType(paramData, null);
+      }
+
+      switch (paramQueryType) {
         case ParamData.ID_TOKEN_PARAM:
           queryList.add(IdTokenParameterQueryGenerator.prepareQuery(paramData));
           break;
@@ -96,10 +89,20 @@ public class CombinedParameterQueryGenerator {
           queryList.add(UriParameterQueryGenerator.prepareQuery(paramData));
           break;
         default:
-          break;
+          throw unsupportedParameterType(paramData, paramQueryType);
       }
     }
 
     return QueryCombinators.prepareAndQuery(queryList);
+  }
+
+  private static NotImplementedException unsupportedParameterType(
+      ParamData paramData, String paramQueryType) {
+    return new NotImplementedException(
+        "Query generation is not implemented for parameter type '"
+            + paramQueryType
+            + "' (parameter '"
+            + paramData.getParamName()
+            + "').");
   }
 }

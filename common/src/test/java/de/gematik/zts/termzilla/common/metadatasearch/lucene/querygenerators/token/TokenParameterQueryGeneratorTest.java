@@ -116,7 +116,6 @@ class TokenParameterQueryGeneratorTest {
           "Term value should be 'http://hospital.org|12345'");
     }
 
-    // TODO: check behavior against FHIR spec - case insensitivity for url might be a problem
     @Test
     @DisplayName("Should perform case-insensitive matching by lowercasing values")
     void shouldLowercaseValues() throws NotImplementedException {
@@ -135,7 +134,6 @@ class TokenParameterQueryGeneratorTest {
           "System and value should be lowercased");
     }
 
-    // TODO: check behavior against FHIR spec
     @Test
     @DisplayName("Should lowercase value-only token")
     void shouldLowercaseValueOnlyToken() throws NotImplementedException {
@@ -151,7 +149,6 @@ class TokenParameterQueryGeneratorTest {
       assertEquals("active", termQuery.getTerm().text(), "Value should be lowercased");
     }
 
-    // TODO: check behavior against FHIR spec
     @Test
     @DisplayName("Should throw NotImplementedException when both system and value are null")
     void shouldThrowExceptionWhenBothNull() {

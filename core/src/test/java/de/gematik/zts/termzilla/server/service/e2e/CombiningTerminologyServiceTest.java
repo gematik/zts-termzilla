@@ -23,10 +23,18 @@ package de.gematik.zts.termzilla.server.service.e2e;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static de.gematik.zts.termzilla.api.parameters.VsExpandParameter.OFFSET_PARAM;
+import static de.gematik.zts.termzilla.api.parameters.VsExpandParameter.URL_PARAM;
+import static de.gematik.zts.termzilla.api.parameters.VsExpandParameter.VALUESET_VERSION_PARAM;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
 import de.gematik.zts.termzilla.api.exceptions.InvalidConfigurationException;
@@ -46,13 +54,19 @@ import de.gematik.zts.fhir.CombiningTestPackageHelper;
 import de.gematik.zts.fhir.FhirTerminologyTool;
 import de.gematik.zts.fhir.Helper;
 import de.gematik.zts.fhir.ValuSetBuilder;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.IntegerType;
+import org.hl7.fhir.r4.model.Parameters;
+import org.hl7.fhir.r4.model.StringType;
+import org.hl7.fhir.r4.model.UriType;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -60,241 +74,314 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 
 @Execution(ExecutionMode.SAME_THREAD)
 class CombiningTerminologyServiceTest {
 
-  private static final String DEFAULT_SCOPE = "fhir";
+    private static final String DEFAULT_SCOPE = "fhir";
 
-  private static final String FHIR_BASE_URL = "https://tx.fhir.org/r4/";
-  private static final FhirTerminologyTool tt = new FhirTerminologyTool(FHIR_BASE_URL);
+    private static final String FHIR_BASE_URL = "https://tx.fhir.org/r4/";
+    private static final FhirTerminologyTool tt = new FhirTerminologyTool(FHIR_BASE_URL);
 
-  private static CombiningTerminologyServiceTool ctsTool;
-  private static CombiningTerminologyService combiningService;
-  private static ConfigProperties mockProperties;
-  private static Path baseWorkingDirectory;
+    private static CombiningTerminologyServiceTool ctsTool;
+    private static CombiningTerminologyService combiningService;
+    private static ConfigProperties mockProperties;
+    private static Path baseWorkingDirectory;
 
-  private static FhirTermsTerminologyManager fhirManager;
-  private static FhirConfigProperties fhirProperties;
-  private static Path fhirPackageLoadPath;
+    private static FhirTermsTerminologyManager fhirManager;
+    private static FhirConfigProperties fhirProperties;
+    private static Path fhirPackageLoadPath;
 
-  @BeforeAll
-  static void setUpAll() throws InvalidConfigurationException, IOException {
-
-    // Setup FHIR Terminology Manager Configuration
-    fhirPackageLoadPath = Files.createTempDirectory("fhir-terms");
-    fhirProperties = new FhirConfigProperties();
-    fhirProperties.setFhirTermsStart(true);
-    fhirProperties.setFhirTermsLoadDependencies(false);
-    fhirProperties.setFhirTermsPackageFolderLocation(fhirPackageLoadPath.toString());
-
-    // Setup Combining Terminology Service Configuration
-    baseWorkingDirectory = Files.createTempDirectory("working");
-    mockProperties = mock(ConfigProperties.class);
-    when(mockProperties.getBaseWorkingDir()).thenReturn(baseWorkingDirectory.toString());
-
-    setupScenario00();
-  }
-
-  @AfterAll
-  static void tearDownAll() throws IOException {
-    CombiningTestPackageHelper.deletePackageDirectory(fhirPackageLoadPath);
-  }
-
-  // ==================================================================
-
-  private static void setupScenario00() throws InvalidConfigurationException {
-    CombiningTestPackageHelper.copyTestPackage(
-        "testpackages/hl7.fhir.r4.core-4.0.1.tgz", fhirPackageLoadPath);
-    CombiningTestPackageHelper.copyTestPackage(
-        "testpackages/bfarm.terminologien.internal-2025.0.0.tgz", fhirPackageLoadPath);
-    CombiningTestPackageHelper.copyTestPackage(
-        "testpackages/bfarm.internal.misc-1.0.0-rc.20250621074552.tgz", fhirPackageLoadPath);
-
-    fhirManager =
-        new FhirTermsTerminologyManager(baseWorkingDirectory, DEFAULT_SCOPE, fhirProperties);
-    combiningService = new CombiningTerminologyService(List.of(fhirManager), mockProperties);
-    ctsTool = new CombiningTerminologyServiceTool(combiningService);
-  }
-
-  // ----------------------------------------------------------------------------------------
-
-  @Nested
-  class ValidateCodeValueSetTest {
-
-    @ParameterizedTest
-    @CsvSource({
-      "http://hl7.org/fhir/versioning-policy,versioned",
-      "http://terminology.hl7.org/CodeSystem/need,none",
-    })
-    void validateCodeVs_provideVsValidateCodeOnly(String url, String code)
-        throws NotImplementedException,
-            UnsupportedTerminologyException,
-            UnknownScopeException,
-            UnknownConceptException {
-      VsValidateCodeParameter validateParameter =
-          VsValidateCodeParameter.builder()
-              .valueSetParam(ValuSetBuilder.createAllConceptsValueSet(url, null))
-              .codeParam(new TokenParam(code))
-              .inferSystemParam(new BooleanType(true))
-              .build();
-
-      ValidateCodeResult result = combiningService.validateCodeVs(DEFAULT_SCOPE, validateParameter);
-      assertTrue(result.isResult(), "The code should be valid in the ValueSet with URL: " + url);
+    private static Parameters emptyExpansionResponse() {
+        ValueSet valueSet = new ValueSet();
+        valueSet.setExpansion(new ValueSet.ValueSetExpansionComponent().setTotal(0));
+        Parameters response = new Parameters();
+        response.addParameter().setResource(valueSet);
+        return response;
     }
 
-    @ParameterizedTest
-    @CsvSource({
-      "http://hl7.org/fhir/ValueSet/location-mode,instance",
-    })
-    void validateCodeVs_referencedVsValidateCodeOnly(String url, String code)
-        throws NotImplementedException,
-            UnsupportedTerminologyException,
-            UnknownScopeException,
-            UnknownConceptException {
-      VsValidateCodeParameter validateParameter =
-          VsValidateCodeParameter.builder()
-              .urlParam(new UriParam(url))
-              .codeParam(new TokenParam(code))
-              .inferSystemParam(new BooleanType(true))
-              .build();
+    private static Parameters invokeRemoteExpand(VsExpandParameter expandParameter) {
+        IGenericClient client = mock(IGenericClient.class, RETURNS_DEEP_STUBS);
+        var operation = client.operation().onType(ValueSet.class).named("$expand");
+        when(operation.withParameters(any(Parameters.class)).execute())
+                .thenReturn(emptyExpansionResponse());
+        clearInvocations(operation);
 
-      ValidateCodeResult result = combiningService.validateCodeVs(DEFAULT_SCOPE, validateParameter);
-      assertTrue(result.isResult(), "The code should be valid in the ValueSet with URL: " + url);
+        new FhirTerminologyTool(client).expandVs(expandParameter);
+
+        ArgumentCaptor<Parameters> parametersCaptor = ArgumentCaptor.forClass(Parameters.class);
+        verify(operation).withParameters(parametersCaptor.capture());
+        return parametersCaptor.getValue();
     }
 
-    @ParameterizedTest
-    @CsvSource({
-      "http://hl7.org/fhir/versioning-policy,versioned",
-      "http://terminology.hl7.org/CodeSystem/need,none"
-    })
-    @DisplayName("validateCodeVs returns true when only coding is provided")
-    void validateCodeVs_codingParameterOnly(String url, String code)
-        throws NotImplementedException,
-            UnsupportedTerminologyException,
-            UnknownScopeException,
-            UnknownConceptException {
-
-      // GIVEN
-      Coding coding = new Coding(url, code, null);
-      VsValidateCodeParameter validateParameter =
-          VsValidateCodeParameter.builder()
-              .valueSetParam(ValuSetBuilder.createAllConceptsValueSet(url, null))
-              .codingParam(coding)
-              .build();
-
-      // WHEN
-      ValidateCodeResult result = combiningService.validateCodeVs(DEFAULT_SCOPE, validateParameter);
-
-      // THEN
-      assertTrue(result.isResult(), "The coding should be valid in the ValueSet with URL: " + url);
+    private static boolean hasParameter(Parameters parameters, String name) {
+        return parameters.getParameter().stream().anyMatch(parameter -> name.equals(parameter.getName()));
     }
 
-    @ParameterizedTest
-    @CsvSource({"http://hl7.org/fhir/versioning-policy,versioned"})
-    @DisplayName("validateCodeVs returns true when codeableConcept has at least one valid coding")
-    void validateCodeVs_codeableConceptWithOneValidCoding(String url, String validCode)
-        throws NotImplementedException,
-            UnsupportedTerminologyException,
-            UnknownScopeException,
-            UnknownConceptException {
-
-      // GIVEN
-      CodeableConcept codeableConcept = new CodeableConcept();
-      codeableConcept.addCoding(new Coding(url, "definitely-not-a-valid-code", null));
-      codeableConcept.addCoding(new Coding(url, validCode, null));
-
-      VsValidateCodeParameter validateParameter =
-          VsValidateCodeParameter.builder()
-              .valueSetParam(ValuSetBuilder.createAllConceptsValueSet(url, null))
-              .codeableConceptParam(codeableConcept)
-              .build();
-
-      // WHEN
-      ValidateCodeResult result = combiningService.validateCodeVs(DEFAULT_SCOPE, validateParameter);
-
-      // THEN
-      assertTrue(
-          result.isResult(),
-          "The codeableConcept should be valid if one coding is in the ValueSet.");
+    private static Parameters.ParametersParameterComponent getParameter(
+            Parameters parameters, String name) {
+        return parameters.getParameter().stream()
+                .filter(parameter -> name.equals(parameter.getName()))
+                .findFirst()
+                .orElseThrow();
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"http://hl7.org/fhir/versioning-policy"})
-    @DisplayName("validateCodeVs returns false when codeableConcept contains no valid codings")
-    void validateCodeVs_codeableConceptWithoutValidCoding(String url)
-        throws NotImplementedException,
-            UnsupportedTerminologyException,
-            UnknownScopeException,
-            UnknownConceptException {
+    @Test
+    @DisplayName("FhirTerminologyTool only sends a non-empty ValueSet version")
+    void fhirTerminologyToolShouldOnlySendNonEmptyVersion() {
+        Parameters withVersion =
+                invokeRemoteExpand(
+                        VsExpandParameter.builder()
+                                .urlParam(new UriType("https://example.org/fhir/ValueSet/loinc-translated-terms-de-de"))
+                                .valueSetVersionParam(new StringType("2.83.0"))
+                                .build());
 
-      // GIVEN
-      CodeableConcept codeableConcept = new CodeableConcept();
-      codeableConcept.addCoding(new Coding(url, "invalid-code-a", null));
-      codeableConcept.addCoding(new Coding(url, "invalid-code-b", null));
+        assertTrue(hasParameter(withVersion, VALUESET_VERSION_PARAM));
+        assertEquals(
+                "2.83.0",
+                ((StringType) getParameter(withVersion, VALUESET_VERSION_PARAM).getValue()).getValue());
+        assertEquals(
+                0,
+                ((IntegerType) getParameter(withVersion, OFFSET_PARAM).getValue()).getValue());
 
-      VsValidateCodeParameter validateParameter =
-          VsValidateCodeParameter.builder()
-              .valueSetParam(ValuSetBuilder.createAllConceptsValueSet(url, null))
-              .codeableConceptParam(codeableConcept)
-              .build();
+        Parameters withoutVersion =
+                invokeRemoteExpand(
+                        VsExpandParameter.builder()
+                                .urlParam(new UriType("https://example.org/fhir/ValueSet/loinc-translated-terms-de-de"))
+                                .build());
+        assertFalse(hasParameter(withoutVersion, VALUESET_VERSION_PARAM));
 
-      // WHEN
-      ValidateCodeResult result = combiningService.validateCodeVs(DEFAULT_SCOPE, validateParameter);
-
-      // THEN
-      assertFalse(
-          result.isResult(), "The codeableConcept should be invalid when all codings are invalid.");
-      assertEquals("None of the provided Codings is valid in the ValueSet.", result.getMessage());
+        Parameters withEmptyVersion =
+                invokeRemoteExpand(
+                        VsExpandParameter.builder()
+                                .urlParam(new UriType("https://example.org/fhir/ValueSet/loinc-translated-terms-de-de"))
+                                .valueSetVersionParam(new StringType(""))
+                                .build());
+        assertFalse(hasParameter(withEmptyVersion, VALUESET_VERSION_PARAM));
+        assertTrue(hasParameter(withEmptyVersion, URL_PARAM));
+        assertTrue(hasParameter(withEmptyVersion, OFFSET_PARAM));
     }
-  }
 
-  // ----------------------------------------------------------------------------------------
+    @BeforeAll
+    static void setUpAll() throws InvalidConfigurationException, IOException {
 
-  @Tag("E2E")
-  @Disabled(
-      "Disabled because tx.fhi.org does not always respond in time, causing test failures. This should not be run in regular test runs anyways, but can be enabled for manual testing of the expansion functionality.")
-  @Nested
-  class ExpandValueSetTest {
+        // Setup FHIR Terminology Manager Configuration
+        fhirPackageLoadPath = Files.createTempDirectory("fhir-terms");
+        fhirProperties = new FhirConfigProperties();
+        fhirProperties.setFhirTermsStart(true);
+        fhirProperties.setFhirTermsPackageFolderLocation(fhirPackageLoadPath.toString());
 
-    @ParameterizedTest
-    @ValueSource(
-        strings = {
-          "http://hl7.org/fhir/versioning-policy",
-          "http://terminology.hl7.org/CodeSystem/need",
-          "http://terminology.hl7.org/CodeSystem/questionnaire-usage-mode"
+        // Setup Combining Terminology Service Configuration
+        baseWorkingDirectory = Files.createTempDirectory("working");
+        mockProperties = mock(ConfigProperties.class);
+        when(mockProperties.getBaseWorkingDir()).thenReturn(baseWorkingDirectory.toString());
+        when(mockProperties.getExpansionDefaultCount()).thenReturn(100);
+        when(mockProperties.getExpansionMaximumCount()).thenReturn(1_000_000);
+
+        setupScenario00();
+    }
+
+    @AfterAll
+    static void tearDownAll() throws IOException {
+        CombiningTestPackageHelper.deletePackageDirectory(fhirPackageLoadPath);
+    }
+
+    // ==================================================================
+
+    private static void setupScenario00() throws InvalidConfigurationException {
+        CombiningTestPackageHelper.copyTestPackage(
+                "testpackages/hl7.fhir.r4.core-4.0.1.tgz", fhirPackageLoadPath);
+        CombiningTestPackageHelper.copyTestPackage(
+                "testpackages/bfarm.terminologien.internal-2025.0.0.tgz", fhirPackageLoadPath);
+        CombiningTestPackageHelper.copyTestPackage(
+                "testpackages/bfarm.internal.misc-1.0.0-rc.20250621074552.tgz", fhirPackageLoadPath);
+
+        fhirManager =
+                new FhirTermsTerminologyManager(baseWorkingDirectory, DEFAULT_SCOPE, fhirProperties);
+        combiningService = new CombiningTerminologyService(List.of(fhirManager), mockProperties);
+        ctsTool = new CombiningTerminologyServiceTool(combiningService);
+    }
+
+    // ----------------------------------------------------------------------------------------
+
+    @Nested
+    class ValidateCodeValueSetTest {
+
+        @ParameterizedTest
+        @CsvSource({
+                "http://hl7.org/fhir/versioning-policy,versioned",
+                "http://terminology.hl7.org/CodeSystem/need,none",
         })
-    void expandVS_urlSet(String url)
-        throws NotImplementedException,
-            UnknownConceptException,
-            UnsupportedTerminologyException,
-            UnknownScopeException {
+        void validateCodeVs_provideVsValidateCodeOnly(String url, String code)
+                throws NotImplementedException,
+                UnsupportedTerminologyException,
+                UnknownScopeException,
+                UnknownConceptException {
+            VsValidateCodeParameter validateParameter =
+                    VsValidateCodeParameter.builder()
+                            .valueSetParam(ValuSetBuilder.createAllConceptsValueSet(url, null))
+                            .codeParam(new TokenParam(code))
+                            .inferSystemParam(new BooleanType(true))
+                            .build();
 
-      ValueSet vs = ValuSetBuilder.createAllConceptsValueSet(url, null);
+            ValidateCodeResult result = combiningService.validateCodeVs(DEFAULT_SCOPE, validateParameter);
+            assertTrue(result.isResult(), "The code should be valid in the ValueSet with URL: " + url);
+        }
 
-      VsExpandParameter expandParameter = VsExpandParameter.builder().valueSetParam(vs).build();
+        @ParameterizedTest
+        @CsvSource({
+                "http://hl7.org/fhir/ValueSet/location-mode,instance",
+        })
+        void validateCodeVs_referencedVsValidateCodeOnly(String url, String code)
+                throws NotImplementedException,
+                UnsupportedTerminologyException,
+                UnknownScopeException,
+                UnknownConceptException {
+            VsValidateCodeParameter validateParameter =
+                    VsValidateCodeParameter.builder()
+                            .urlParam(new UriParam(url))
+                            .codeParam(new TokenParam(code))
+                            .inferSystemParam(new BooleanType(true))
+                            .build();
 
-      List<ValueSet.ValueSetExpansionContainsComponent> expandResultLocal =
-          ctsTool.expandVs(expandParameter, DEFAULT_SCOPE);
+            ValidateCodeResult result = combiningService.validateCodeVs(DEFAULT_SCOPE, validateParameter);
+            assertTrue(result.isResult(), "The code should be valid in the ValueSet with URL: " + url);
+        }
 
-      System.out.println(
-          FhirContext.forR4().newJsonParser().setPrettyPrint(true).encodeResourceToString(vs));
+        @ParameterizedTest
+        @CsvSource({
+                "http://hl7.org/fhir/versioning-policy,versioned",
+                "http://terminology.hl7.org/CodeSystem/need,none"
+        })
+        @DisplayName("validateCodeVs returns true when only coding is provided")
+        void validateCodeVs_codingParameterOnly(String url, String code)
+                throws NotImplementedException,
+                UnsupportedTerminologyException,
+                UnknownScopeException,
+                UnknownConceptException {
 
-      expandParameter.setOffsetParam(null);
-      List<ValueSet.ValueSetExpansionContainsComponent> expandResultRemote =
-          tt.expandVs(expandParameter);
+            // GIVEN
+            Coding coding = new Coding(url, code, null);
+            VsValidateCodeParameter validateParameter =
+                    VsValidateCodeParameter.builder()
+                            .valueSetParam(ValuSetBuilder.createAllConceptsValueSet(url, null))
+                            .codingParam(coding)
+                            .build();
 
-      assertTrue(
-          Helper.hasSameContent(expandResultLocal, expandResultRemote),
-          "The local and remote expansion results should have the same content.");
+            // WHEN
+            ValidateCodeResult result = combiningService.validateCodeVs(DEFAULT_SCOPE, validateParameter);
+
+            // THEN
+            assertTrue(result.isResult(), "The coding should be valid in the ValueSet with URL: " + url);
+        }
+
+        @ParameterizedTest
+        @CsvSource({"http://hl7.org/fhir/versioning-policy,versioned"})
+        @DisplayName("validateCodeVs returns true when codeableConcept has at least one valid coding")
+        void validateCodeVs_codeableConceptWithOneValidCoding(String url, String validCode)
+                throws NotImplementedException,
+                UnsupportedTerminologyException,
+                UnknownScopeException,
+                UnknownConceptException {
+
+            // GIVEN
+            CodeableConcept codeableConcept = new CodeableConcept();
+            codeableConcept.addCoding(new Coding(url, "definitely-not-a-valid-code", null));
+            codeableConcept.addCoding(new Coding(url, validCode, null));
+
+            VsValidateCodeParameter validateParameter =
+                    VsValidateCodeParameter.builder()
+                            .valueSetParam(ValuSetBuilder.createAllConceptsValueSet(url, null))
+                            .codeableConceptParam(codeableConcept)
+                            .build();
+
+            // WHEN
+            ValidateCodeResult result = combiningService.validateCodeVs(DEFAULT_SCOPE, validateParameter);
+
+            // THEN
+            assertTrue(
+                    result.isResult(),
+                    "The codeableConcept should be valid if one coding is in the ValueSet.");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"http://hl7.org/fhir/versioning-policy"})
+        @DisplayName("validateCodeVs returns false when codeableConcept contains no valid codings")
+        void validateCodeVs_codeableConceptWithoutValidCoding(String url)
+                throws NotImplementedException,
+                UnsupportedTerminologyException,
+                UnknownScopeException,
+                UnknownConceptException {
+
+            // GIVEN
+            CodeableConcept codeableConcept = new CodeableConcept();
+            codeableConcept.addCoding(new Coding(url, "invalid-code-a", null));
+            codeableConcept.addCoding(new Coding(url, "invalid-code-b", null));
+
+            VsValidateCodeParameter validateParameter =
+                    VsValidateCodeParameter.builder()
+                            .valueSetParam(ValuSetBuilder.createAllConceptsValueSet(url, null))
+                            .codeableConceptParam(codeableConcept)
+                            .build();
+
+            // WHEN
+            ValidateCodeResult result = combiningService.validateCodeVs(DEFAULT_SCOPE, validateParameter);
+
+            // THEN
+            assertFalse(
+                    result.isResult(), "The codeableConcept should be invalid when all codings are invalid.");
+            assertEquals("None of the provided Codings is valid in the ValueSet.", result.getMessage());
+        }
     }
-  }
 
-  // ----------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------
+
+    @Tag("E2E")
+    @Disabled(
+            "Disabled because tx.fhi.org does not always respond in time, causing test failures. This should not be run in regular test runs anyways, but can be enabled for manual testing of the expansion functionality.")
+    @Nested
+    class ExpandValueSetTest {
+
+        @ParameterizedTest
+        @ValueSource(
+                strings = {
+                        "http://hl7.org/fhir/versioning-policy",
+                        "http://terminology.hl7.org/CodeSystem/need",
+                        "http://terminology.hl7.org/CodeSystem/questionnaire-usage-mode"
+                })
+        void expandVS_urlSet(String url)
+                throws NotImplementedException,
+                UnknownConceptException,
+                UnsupportedTerminologyException,
+                UnknownScopeException {
+
+            ValueSet vs = ValuSetBuilder.createAllConceptsValueSet(url, null);
+
+            VsExpandParameter expandParameter = VsExpandParameter.builder().valueSetParam(vs).build();
+
+            List<ValueSet.ValueSetExpansionContainsComponent> expandResultLocal =
+                    ctsTool.expandVs(expandParameter, DEFAULT_SCOPE);
+
+            System.out.println(
+                    FhirContext.forR4().newJsonParser().setPrettyPrint(true).encodeResourceToString(vs));
+
+            expandParameter.setOffsetParam(null);
+            List<ValueSet.ValueSetExpansionContainsComponent> expandResultRemote =
+                    tt.expandVs(expandParameter);
+
+            assertTrue(
+                    Helper.hasSameContent(expandResultLocal, expandResultRemote),
+                    "The local and remote expansion results should have the same content.");
+        }
+    }
+
+    // ----------------------------------------------------------------------------------------
 
 }

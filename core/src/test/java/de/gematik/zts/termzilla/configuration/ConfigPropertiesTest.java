@@ -26,6 +26,7 @@ import static de.gematik.zts.termzilla.api.constants.HttpHeaderConstants.LOCATIO
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 import de.gematik.zts.termzilla.api.exceptions.InvalidConfigurationException;
@@ -102,6 +103,64 @@ class ConfigPropertiesTest {
     configProperties.setCapabilitiesSoftwareVersion("1.0.0");
     configProperties.setCapabilitiesSoftwareReleaseDate("2023-10-01");
     configProperties.setCapabilitiesRestSecurityDescription("Test security");
+  }
+
+  @Test
+  void defaultScopeAndExpansionCountsPreservePreviousDefaults() {
+    assertThat(configProperties.getDefaultScope()).isEqualTo("fhir");
+    assertThat(configProperties.getExpansionDefaultCount()).isEqualTo(100);
+    assertThat(configProperties.getExpansionMaximumCount()).isEqualTo(1_000_000);
+  }
+
+  @Test
+  void rejectsBlankDefaultScope() {
+    configProperties.setDefaultScope(" ");
+    assertThatThrownBy(() -> configProperties.validate())
+        .isInstanceOf(InvalidConfigurationException.class)
+        .hasMessageContaining("Default scope");
+  }
+
+  @Test
+  void rejectsExpansionDefaultAboveMaximum() {
+    configProperties.setExpansionDefaultCount(101);
+    configProperties.setExpansionMaximumCount(100);
+    assertThatThrownBy(() -> configProperties.validate())
+        .isInstanceOf(InvalidConfigurationException.class)
+        .hasMessageContaining("Expansion counts");
+  }
+
+  @Test
+  void allowsZeroExpansionDefaultCount() {
+    // GIVEN
+    configProperties.setExpansionDefaultCount(0);
+
+    // WHEN
+    Throwable thrown = catchThrowable(configProperties::validate);
+
+    // THEN
+    assertThat(thrown).isNull();
+  }
+
+  @Test
+  void rejectsNegativeExpansionDefaultCount() {
+    // GIVEN
+    configProperties.setExpansionDefaultCount(-1);
+
+    // WHEN
+    Throwable thrown = catchThrowable(configProperties::validate);
+
+    // THEN
+    assertThat(thrown)
+        .isInstanceOf(InvalidConfigurationException.class)
+        .hasMessageContaining("default count must not be negative");
+  }
+
+  @Test
+  void rejectsZeroExpansionMaximum() {
+    configProperties.setExpansionMaximumCount(0);
+    assertThatThrownBy(() -> configProperties.validate())
+        .isInstanceOf(InvalidConfigurationException.class)
+        .hasMessageContaining("Expansion counts");
   }
 
   @Nested

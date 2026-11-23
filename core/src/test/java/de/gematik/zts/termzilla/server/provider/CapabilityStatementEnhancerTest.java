@@ -89,6 +89,14 @@ class CapabilityStatementEnhancerTest {
         .thenReturn("No security mechanisms are enabled for this instance");
   }
 
+  @Test
+  void doesNotAdvertiseUnimplementedCandidateFeatures() {
+    CapabilityStatementEnhancer.enhanceStatement(capabilityStatement, configProperties);
+    assertThat(capabilityStatement.getExtension()).noneMatch(extension ->
+        "http://hl7.org/fhir/uv/application-feature/StructureDefinition/feature"
+            .equals(extension.getUrl()));
+  }
+
   @Nested
   @DisplayName("Basic Enhancement Tests")
   class BasicEnhancementTests {

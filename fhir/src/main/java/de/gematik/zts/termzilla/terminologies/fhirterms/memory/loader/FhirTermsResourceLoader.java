@@ -27,8 +27,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.gematik.zts.termzilla.api.constants.ResourceUserData;
 import de.gematik.zts.termzilla.api.exceptions.InvalidConfigurationException;
 import de.gematik.zts.termzilla.common.config.provision.ProvisionMode;
-import de.gematik.zts.termzilla.common.constants.CanonicalUrl;
+import de.gematik.zts.termzilla.common.constants.StandardTerminologyCanonicalUrls;
 import de.gematik.zts.termzilla.terminologies.fhirterms.config.FhirConfigProperties;
+import de.gematik.zts.termzilla.terminologies.fhirterms.config.loading.LoadingMode;
 import de.gematik.zts.termzilla.terminologies.fhirterms.config.provision.PackageProvisionSettings;
 import de.gematik.zts.termzilla.terminologies.fhirterms.config.provision.ProvisionSettings;
 import de.gematik.zts.termzilla.terminologies.fhirterms.exceptions.ResourceLoadingException;
@@ -44,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +62,7 @@ import org.hl7.fhir.r4.model.ConceptMap;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.MetadataResource;
 import org.hl7.fhir.r4.model.ValueSet;
+import org.semver4j.Semver;
 
 /**
  * Loads FHIR terminology resources from packaged tar balls into an in-memory representation.
@@ -230,32 +233,34 @@ public class FhirTermsResourceLoader {
     // iterate over all tgz files in the package folder
     try (Stream<Path> paths = Files.list(packageFolder)) {
 
-      // Liste der Paketdateien erstellen
-      List<Path> tarFiles = collectTarFiles(paths);
+      // collect a list of all tar files in the package folder
+      List<Path> tarPaths = collectTarFiles(paths);
 
-      // TODO: Sortierung der Tarballs nach Package und Versionsnummer
-      //  -> das ist wichtig, damit wir immer die neuesten Versionen zuerst laden. Insbesondere bei
-      //     Systemen, bei denen sich die Versionsnummer bei Korrekturen nicht ändert, ist das
-      //     unerlässlich.
+      // Sort the tarballs by package and version number, so that we always load the newest
+      // versions first. This is especially important for systems where the version number
+      // does not change with corrections.
+      List<Path> tarFiles = sortTarballs(tarPaths);
 
-      // Wenn alle tarballs bereits verarbeitet wurden, wird die Methode beendet (beendet die
-      // rekursive Aufrufstruktur)
+      // If all tarballs have already been processed, the method returns (ends the recursive call structure)
       if (tarFiles.size() == processedTarBalls.size()) {
         return;
       }
 
-      // ObjectMapper erstellen und so konfigurieren, dass er bei der Verarbeitung unbekannter
-      // Eigenschaften/Elemente abbricht
+      // There were errors processing tarballs. To avoid an infinite loop, we abort the processing.
+      if (tarFiles.size() == processedTarBalls.size() + tarBallFails.size()) {
+        return;
+      }
+
+      // Create an ObjectMapper and configure it to fail on unknown properties/elements
       ObjectMapper mapper =
           new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-      // Über alle Tarballs iterieren
+      // Iterate over all tarballs
       for (Path tarFile : tarFiles) {
         processTarFile(tarFile, packageUnzipLocation, mapper);
       }
 
-      // Rekursiver Methodenaufruf, um auch die heruntergeladenen Abhängigkeiten verarbeiten zu
-      // können.
+      // Recursive method call to also process the downloaded dependencies.
       unzipAndLoadPackageContent(packageFolder, packageUnzipLocation);
     }
   }
@@ -330,8 +335,8 @@ public class FhirTermsResourceLoader {
    */
   private void processTarFile(Path tarFile, Path packageUnzipLocation, ObjectMapper mapper) {
     try {
-      // Bei bereits verarbeiteten Tarballs wird der Vorgang übersprungen
-      if (processedTarBalls.contains(tarFile)) {
+      // Bei bereits verarbeiteten oder fehlerhaft verarbeiteten Tarballs wird der Vorgang übersprungen
+      if (processedTarBalls.contains(tarFile) || tarBallFails.contains(tarFile)) {
         return;
       }
 
@@ -444,55 +449,41 @@ public class FhirTermsResourceLoader {
    */
   private void processCodeSystem(CodeSystem codeSystem) {
 
-    // TODO: Umgang mit Supplement CodeSystem Ressourcen klären: Diese müssen ja eigentlich andere
-    //  CodeSysteme - sofern vorhanden - ergänzen. Das wird u.U. ein Reihenfolgeproblem beim laden.
-    //  Ferner dürfen Supplements nicht mit den üblichen Operationen genutzt werden. Das ist aber an
-    //  anderer Stelle zu klären. Die Frage ist, ob Supplements überhaupt auftauchen sollten?! Im
-    //  Package ist das sicherlich okay, aber im Server?
-
     // CodeSystem-Ressourcen, die nicht unseren Qualitätsstandards entsprechen, werden ignoriert
-    // TODO: Vielleicht müssen wir an dieser STelle noch strikter sein und den Startvorgang des
-    //  Servers abbrechen. Ggf. sollte sich das Verhalten auch konfigurieren lassen
     if (!isHealthyCodeSystem(codeSystem)) {
+      if (properties.getLoadingMode() == LoadingMode.STRICT) {
+        throw new ResourceLoadingException(
+            "CodeSystem with url " + codeSystem.getUrl() + " and version "
+                + codeSystem.getVersion() + " does not meet quality requirements");
+      }
       return;
     }
 
     // TODO: Wir brauchen einen generischen Mechanismus, um urls zu claimen, die vom Loader nicht
     //  angezogen werden dürfen oder bei denen die Verarbeitung komplett abbricht.
     // Sofern es sich um SNOMED-CT oder LOINC handelt, ignorieren wir die Ressourcen
-    if (codeSystem.getUrl().equals(CanonicalUrl.SNOMEDCT)
-        || codeSystem.getUrl().equals(CanonicalUrl.LOINC)) {
+    if (codeSystem.getUrl().equals(StandardTerminologyCanonicalUrls.SNOMEDCT)
+        || codeSystem.getUrl().equals(StandardTerminologyCanonicalUrls.LOINC)) {
       log.warn(
           "Skip loading CodeSystem with url {} (remember: SNOMED and LOINC are supported by different Terminology Managers)",
           codeSystem.getUrl());
       return;
     }
 
-    // TODO: Wir sollten nochmal überlegen, ob wir aufs erste auch "fragment" verbieten wollen.
     // Sofern das CodeSystem als Content NOT-PRESENT hat, ignorieren wir die Ressource
     if (codeSystem.getContent().equals(CodeSystem.CodeSystemContentMode.NOTPRESENT)) {
       log.warn("CodeSystem {} (Content = NOT-PRESENT) --> skipping", codeSystem.getUrl());
       return;
     }
 
-    // TODO: Weitere Überlegungen bezüglich hierarchischer Strukturen anstellen und überlegen, ob
-    //  diese immer als parent und child Properties abgebildet werden sollten. Implikationen
-    //  bezüglich der CS-Metadaten (property) beachten, d.h. ggf. Property-Definition ergänzen.
-
     // Hinzufügen der Ressource zur flachen InMemory-Repräsentation
     if (inMemoryRepresentation.getIdToResourceMap().containsKey(codeSystem.getIdPart())) {
-      // TODO: Anscheinend wird diese Exception irgendwo gefangen und führt nicht zum Abbruch des
-      //  Servers. Das ist nicht gut, da wir hier einen Fehler haben, der nicht ignoriert werden
       throw new ResourceLoadingException(
           "CodeSystem with id "
               + codeSystem.getIdPart()
               + " already exists in InMemoryRepresentation");
     }
     inMemoryRepresentation.getIdToResourceMap().put(codeSystem.getIdPart(), codeSystem);
-
-    // TODO: Wir haben noch eine offene Frage bezüglich des Umgangs mit alternativen Canonicals,
-    //  die im Identifier-Element als official gepflegt werden. Es hat sich nicht als praktikabel
-    //  herausgestellt, diese direkt unter ihrem System zu registrieren.
 
   }
 
@@ -504,17 +495,11 @@ public class FhirTermsResourceLoader {
    */
   private void processValueSet(ValueSet valueSet) {
 
-    // TODO: ValueSet-Ressourcen, die nicht unseren Qualitätsstandards entsprechen, werden ignoriert
-
     // TODO: Wir brauchen einen generischen Mechanismus, um urls zu claimen, die vom Loader nicht
     //  angezogen werden dürfen oder bei denen die Verarbeitung komplett abbricht.
 
-    // TODO: Überlegen, wie wir an dieser Stelle mit Expansions umgehen wollen
-
     // Hinzufügen der Ressource zur flachen InMemory-Repräsentation
     if (inMemoryRepresentation.getIdToResourceMap().containsKey(valueSet.getIdPart())) {
-      // TODO: Anscheinend wird diese Exception irgendwo gefangen und führt nicht zum Abbruch des
-      //  Servers. Das ist nicht gut, da wir hier einen Fehler haben, der nicht ignoriert werden
       throw new ResourceLoadingException(
           "ValueSet with id " + valueSet.getIdPart() + " already exists in InMemoryRepresentation");
     }
@@ -529,16 +514,11 @@ public class FhirTermsResourceLoader {
    */
   private void processConceptMap(ConceptMap conceptMap) {
 
-    // TODO: ConceptMap-Ressourcen, die nicht unseren Qualitätsstandards entsprechen, werden
-    // ignoriert
-
     // TODO: Wir brauchen einen generischen Mechanismus, um urls zu claimen, die vom Loader nicht
     //  angezogen werden dürfen oder bei denen die Verarbeitung komplett abbricht.
 
     // Hinzufügen der Ressource zur flachen InMemory-Repräsentation
     if (inMemoryRepresentation.getIdToResourceMap().containsKey(conceptMap.getIdPart())) {
-      // TODO: Anscheinend wird diese Exception irgendwo gefangen und führt nicht zum Abbruch des
-      //  Servers. Das ist nicht gut, da wir hier einen Fehler haben, der nicht ignoriert werden
       throw new ResourceLoadingException(
           "ConceptMap with id "
               + conceptMap.getIdPart()
@@ -637,8 +617,7 @@ public class FhirTermsResourceLoader {
       // apply provision settings
       applyProvisionSettings(resource, packageManifest);
 
-      // TODO: vernünftigen Umgang mit Scoping überlegen. Das ist erstmal nur eine fürchterlich
-      //  schlechte Variante
+      // scopes essentially represent the package and version from which the resource was loaded.
       Set<String> scopeSet = new HashSet<>();
       String packageScope = packageManifest.getName() + "-" + packageManifest.getVersion();
       scopeSet.add(packageScope);
@@ -663,7 +642,12 @@ public class FhirTermsResourceLoader {
       } else if (resource instanceof ConceptMap conceptMap) {
         processConceptMap(conceptMap);
       }
-    } catch (Exception e) {
+    }
+    catch (ResourceLoadingException e){
+      log.error("Fatal error while loading resource from file {} - {} ", file, e.getMessage());
+      throw e;
+    }
+    catch (Exception e) {
       log.error("failed to parse resource from file {} - {} ", file, e.getMessage());
       resourceLoadErrors.add(file.getFileName().toString());
     }
@@ -722,15 +706,76 @@ public class FhirTermsResourceLoader {
                   file ->
                       !Files.isDirectory(file)
                           && (file.getFileName().toString().endsWith(FILE_EXTENSION_JSON)
-                              || file.getFileName().toString().endsWith(FILE_EXTENSION_XML)))
+                          || file.getFileName().toString().endsWith(FILE_EXTENSION_XML)))
               .collect(Collectors.toSet());
 
       for (var resourceFile : allJsonAndXmlFiles) {
         parseResourceFile(resourceFile, packageManifest);
       }
 
+    } catch (ResourceLoadingException ex){
+      throw ex;
     } catch (Exception _) {
       log.error("failed to walk directory {} ", inputFolder);
     }
   }
+
+  /**
+   * Sort a list of tarball paths by package name (ascending) and version (descending).
+   * Attempt to use semantic versioning for sorting.
+   *
+   * @param tarballs A list of Path objects representing tarball files.
+   * @return A sorted list of paths to tarball files.
+   */
+  List<Path> sortTarballs(List<Path> tarballs) {
+
+    List<TarBall> toBeSorted = new ArrayList<>();
+    List<TarBall> unsorted = new ArrayList<>();
+
+    for (Path tarpath: tarballs) {
+      String filename = tarpath.getFileName().toString();
+      String packageName = null;
+      String packageVersion = null;
+      Semver semver = null;
+
+      // Extract package name and version from filename.
+      try {
+        packageName = filename.substring(0, filename.lastIndexOf('-'));
+        packageVersion =
+            filename.replaceAll("\\.tar$|\\.tar\\.gz$|\\.tgz$|\\.zip$", "")
+                .substring(filename.lastIndexOf('-') + 1);
+      }
+      // If `substring()` fails -> do not sort the package, and append it to the end of the list
+      catch (IndexOutOfBoundsException ex){
+        log.warn("Failed to extract package name and version from filename {}. It won't be sorted correctly.", filename, ex);
+        unsorted.add(new TarBall(tarpath, null, null, null));
+        continue;
+      }
+
+      // If the version number cannot be parsed into Semver, then log it. We will still sort it
+      // lexicographically as a fallback.
+      try {
+        semver = new Semver(packageVersion);
+      }
+      catch (IllegalArgumentException ex){
+        log.info("Failed to parse version {} from filename {}. It won't be sorted correctly.", packageVersion, filename, ex);
+      }
+
+      var ball = new TarBall(tarpath, packageName, packageVersion, semver);
+      toBeSorted.add(ball);
+    }
+
+    // Sort first by package name (ascending), then by semantic version (descending),
+    // and finally lexicographically by package version (descending) as a fallback.
+    toBeSorted.sort(Comparator
+            .comparing(TarBall::packageName)
+            .thenComparing(TarBall::semver, Comparator.nullsLast(Comparator.reverseOrder()))
+            .thenComparing(TarBall::packageVersion, Comparator.reverseOrder()));
+
+    log.info("Sorted tarballs ({} sorted, {} unsorted)", toBeSorted.size(), unsorted.size());
+
+    return Stream.concat(toBeSorted.stream(), unsorted.stream()).map(TarBall::path).toList();
+  }
+
+  private record TarBall(Path path, String packageName, String packageVersion, Semver semver) {}
 }

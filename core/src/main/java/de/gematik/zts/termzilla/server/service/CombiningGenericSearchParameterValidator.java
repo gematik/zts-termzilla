@@ -21,13 +21,11 @@
 package de.gematik.zts.termzilla.server.service;
 
 import ca.uhn.fhir.rest.param.StringParam;
-import ca.uhn.fhir.rest.param.UriParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import de.gematik.zts.termzilla.api.parameters.TerminologyResourceSearchParameter;
 import de.gematik.zts.termzilla.common.validator.CommonParameterValidator;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import org.hl7.fhir.utilities.CanonicalPair;
 
 /** Shared validation utilities for terminology search parameter validators. */
 public abstract class CombiningGenericSearchParameterValidator extends CommonParameterValidator {
@@ -81,43 +79,6 @@ public abstract class CombiningGenericSearchParameterValidator extends CommonPar
     }
 
     throw new InvalidRequestException("The " + joinedNames + " parameters are not supported yet.");
-  }
-
-  /**
-   * Validates that an explicit {@code version} parameter is not combined with a version embedded in
-   * a canonical parameter (for example {@code url|version}).
-   *
-   * @param parameters the search parameters to validate
-   * @param canonicalParam canonical parameter that may include an embedded version (nullable)
-   * @param parameterName logical parameter name for error messages (for example {@code url})
-   * @throws IllegalArgumentException if both version sources are provided
-   */
-  protected static void validateVersionNotDuplicated(
-      TerminologyResourceSearchParameter parameters, UriParam canonicalParam, String parameterName)
-      throws IllegalArgumentException {
-    if (parameters.getVersion().isEmpty() || canonicalParam == null) {
-      return;
-    }
-
-    CanonicalPair canonicalPair = new CanonicalPair(canonicalParam.getValue());
-    if (canonicalPair.hasNonEmptyVersion()) {
-      throw new IllegalArgumentException(
-          "Version must not be set in '"
-              + parameterName
-              + "' parameter if 'version' parameter is used.");
-    }
-  }
-
-  /**
-   * Convenience helper that validates duplicate version definitions for the {@code url} parameter.
-   *
-   * @param parameters the search parameters to validate
-   * @throws IllegalArgumentException if {@code url} embeds a version while {@code version} is set
-   */
-  protected static void validateVersionAgainstUrl(TerminologyResourceSearchParameter parameters)
-      throws IllegalArgumentException {
-    validateVersionNotDuplicated(
-        parameters, parameters.getUrl().orElse(null), TerminologyResourceSearchParameter.SP_URL);
   }
 
   private static boolean hasContentModifiers(StringParam content) {

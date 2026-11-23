@@ -220,12 +220,6 @@ public class CodeSystemConceptSearchHelper {
       float score = scoreDoc.score;
       Document doc = conceptSearcher.storedFields().document(scoreDoc.doc); // Dokumente laden
       String code = doc.getField(NAME_CODE + SEPARATOR + SUFFIX_TOKEN_EXACT).stringValue();
-      // TODO: Ist vielleicht nicht immer sinnvoll, den Display-Wert aus dem Index zu nehmen, da
-      // dieser nicht
-      //  immer die beste Darstellung sein muss (z.B. in Bezug auf bestimmte Sprachvorlieben).
-      // Aktuell rendern
-      //  wir den Display-Wert nochmal neu. Vielleicht kann die Übernahme an dieser Stelle
-      // entfallen.
       String display = doc.getField(NAME_DISPLAY + SEPARATOR + SUFFIX_STRING_EXACT).stringValue();
       log.debug("{} {} {}", score, code, display);
       resultSet.add(new ScoredCoding(new Coding().setCode(code).setDisplay(display), score));

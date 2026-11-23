@@ -33,7 +33,7 @@ import de.gematik.zts.termzilla.api.service.ResourceRetrievalMode;
 import de.gematik.zts.termzilla.common.metadatasearch.helper.CodeSystemConceptSearchHelper;
 import de.gematik.zts.termzilla.common.metadatasearch.helper.model.ScoredCoding;
 import de.gematik.zts.termzilla.common.metadatasearch.lucene.querygenerators.ConceptQueryGenerator;
-import de.gematik.zts.termzilla.common.metadatasearch.lucene.querygenerators.PropertyFilter;
+import de.gematik.zts.termzilla.common.metadatasearch.helper.model.PropertyFilter;
 import de.gematik.zts.termzilla.common.metadatasearch.lucene.querygenerators.QueryCombinators;
 import de.gematik.zts.termzilla.terminologies.common.LanguageSelectionParameter;
 import de.gematik.zts.termzilla.terminologies.fhirterms.FhirTermsTerminologyManager;
@@ -55,10 +55,6 @@ import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.Parameters.ParametersParameterComponent;
 import org.hl7.fhir.r4.model.Type;
-
-// TODO: separaten Refactoring-Task für diese Klasse aufmachen! Das ist aktuell eine PoC
-// Implementierung,
-//  die wir in den nächsten Wochen noch deutlich verbessern und erweitern wollen/müssen.
 
 /**
  * Implements the FHIR {@code CodeSystem/$find-matches} operation for FHIR package-based code
@@ -145,7 +141,6 @@ public class FhirTermsCodeSystemFindMatchesOperation {
     // Überprüfen, ob die Properties in der übergebenen Form vom CodeSystem unterstützt werden
     validateMatchPropertiesAgainstCodeSystem(cs, propertyFilterList);
 
-    // TODO: caseSensitivity Test schreiben
     // Vorbereiten des Vorselektierungsfilters: Suche nach Konzepten, in einem bestimmten CS in
     // einem bestimmten Scope
     Query preFilterQuery = ConceptQueryGenerator.prepareFindMatchesPreFilterQuery(scope, cs);

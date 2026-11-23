@@ -25,7 +25,6 @@ import de.gematik.zts.termzilla.api.parameters.CsSearchParameter;
 import de.gematik.zts.termzilla.server.service.CombiningGenericSearchParameterValidator;
 import lombok.Getter;
 import lombok.Setter;
-import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.codesystems.CodesystemContentMode;
 
 /**
@@ -50,8 +49,7 @@ public class CombiningCsSearchParameterValidator extends CombiningGenericSearchP
   public static void validateParameters(CsSearchParameter parameters)
       throws IllegalArgumentException {
     failOnUnsupportedParameters(parameters);
-    validateSystemOrUrl(parameters);
-    validateVersion(parameters);
+    parameters.validate();
     validateContent(parameters);
     validateContentMode(parameters);
   }
@@ -66,22 +64,6 @@ public class CombiningCsSearchParameterValidator extends CombiningGenericSearchP
       throws InvalidRequestException {
     CombiningGenericSearchParameterValidator.failOnUnsupportedParameters(
         parameters.getLanguage().isPresent(), CsSearchParameter.SP_LANGUAGE);
-  }
-
-  /**
-   * Validates that either system or URL is set, but not both simultaneously.
-   *
-   * @param parameters the search parameters to validate
-   * @throws IllegalArgumentException if both system and URL are set
-   */
-  private static void validateSystemOrUrl(CsSearchParameter parameters)
-      throws IllegalArgumentException {
-
-    // We don't want both parameters to be set. This can only lead to confusing situations
-    if (parameters.getSystem().isPresent() && parameters.getUrl().isPresent()) {
-      throw new IllegalArgumentException(
-          "Either use '" + CodeSystem.SP_URL + "' or '" + CodeSystem.SP_SYSTEM + "' Parameter.");
-    }
   }
 
   /**
@@ -141,19 +123,6 @@ public class CombiningCsSearchParameterValidator extends CombiningGenericSearchP
       throw new IllegalArgumentException(
           "Supplements parameter must not be used when content mode is not 'supplement'.");
     }
-  }
-
-  /**
-   * Validates that version is not set in both URL/System and version parameter simultaneously.
-   *
-   * @param parameters the search parameters to validate
-   * @throws IllegalArgumentException if version is set in both parameters
-   */
-  private static void validateVersion(CsSearchParameter parameters)
-      throws IllegalArgumentException {
-    CombiningGenericSearchParameterValidator.validateVersionAgainstUrl(parameters);
-    CombiningGenericSearchParameterValidator.validateVersionNotDuplicated(
-        parameters, parameters.getSystem().orElse(null), CsSearchParameter.SP_SYSTEM);
   }
 
   /**

@@ -62,10 +62,6 @@ import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.Type;
 import org.hl7.fhir.r4.model.UriType;
 
-// TODO handle abstract parameter
-// TODO handle inactive parameter
-// TODO care about postcoordinated content (if applicable)
-
 /**
  * Implements the FHIR {@code CodeSystem/$lookup} operation for generic FHIR package terminologies.
  *
@@ -276,8 +272,6 @@ public class FhirTermsCodeSystemLookupOperation {
     String csLanguage = codeSystem.getLanguage();
     FhirDesignationManager designationManager = new FhirDesignationManager();
     designationManager.collectDesignationsFromFhirConcept(concept, csLanguage);
-
-    // TODO: über zusätzliche Designations in supplements nachdenken
 
     // set 'display' parameter – language-aware via designation manager
     FhirDesignation displayDesignation = designationManager.getDisplay(languageSelectionParameter);

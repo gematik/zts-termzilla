@@ -115,7 +115,6 @@ public class SnomedValueSetService implements ValueSetSvcInterface {
   @Override
   public boolean isValueSetSupported(String scope, String url, String version)
       throws UnknownScopeException {
-    // TODO: Implement for SNOMED.
     return false;
   }
 
@@ -126,7 +125,6 @@ public class SnomedValueSetService implements ValueSetSvcInterface {
    */
   @Override
   public List<String> getSupportedValueSetCanonicalList() {
-    // TODO: Implement for SNOMED.
     return new ArrayList<>();
   }
 
@@ -139,7 +137,6 @@ public class SnomedValueSetService implements ValueSetSvcInterface {
    */
   @Override
   public List<ValueSet> getValueSetList() {
-    // TODO: Implement for SNOMED.
     return List.of();
   }
 
@@ -153,7 +150,6 @@ public class SnomedValueSetService implements ValueSetSvcInterface {
    */
   @Override
   public ValueSet getValueSet(String scope, IdType theId, ResourceRetrievalMode retrievalMode) {
-    // TODO: Implement for SNOMED.
     return null;
   }
 
@@ -169,7 +165,6 @@ public class SnomedValueSetService implements ValueSetSvcInterface {
    */
   @Override
   public ValueSet getValueSet(String scope, IdType theId) {
-    // TODO: Implement for SNOMED.
     return getValueSet(scope, theId, ResourceRetrievalMode.FULL);
   }
 
@@ -184,7 +179,6 @@ public class SnomedValueSetService implements ValueSetSvcInterface {
    */
   @Override
   public List<ValueSet> getValueSetList(String scope, String url) {
-    // TODO: Implement for SNOMED.
     return List.of();
   }
 
@@ -206,7 +200,6 @@ public class SnomedValueSetService implements ValueSetSvcInterface {
   public ValueSet getValueSet(
       String scope, String url, String version, ResourceRetrievalMode retrievalMode)
       throws ResourceNotFoundException, UnknownScopeException, UnsupportedTerminologyException {
-    // TODO: Implement for SNOMED.
     return null;
   }
 
@@ -227,7 +220,6 @@ public class SnomedValueSetService implements ValueSetSvcInterface {
   @Override
   public ValueSet getValueSet(String scope, String url, String version)
       throws ResourceNotFoundException, UnknownScopeException, UnsupportedTerminologyException {
-    // TODO: Implement for SNOMED.
     return getValueSet(scope, url, version, ResourceRetrievalMode.FULL);
   }
 
@@ -245,7 +237,6 @@ public class SnomedValueSetService implements ValueSetSvcInterface {
   @Override
   public List<IdType> searchValueSet(String scope, VsSearchParameter vsSearchParameter)
       throws NotImplementedException, UnknownScopeException {
-    // TODO: Implement for SNOMED.
     return List.of();
   }
 

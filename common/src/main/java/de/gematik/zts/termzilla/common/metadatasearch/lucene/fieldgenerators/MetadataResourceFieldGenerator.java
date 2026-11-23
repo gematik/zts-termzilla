@@ -153,42 +153,6 @@ public abstract class MetadataResourceFieldGenerator<T extends MetadataResource>
             ResourceFieldGeneratorHelper.addIdTokenParamFieldToDocument(
                 document, NAME_VERSION, resource.getVersion(), false));
 
-    indexCommonTodoFields(document, resource, fieldStore);
-  }
-
-  /**
-   * Placeholder for common TODO fields across all terminology resources. Documents unimplemented
-   * search parameters.
-   *
-   * @param document the Lucene document
-   * @param resource the terminology resource
-   * @param fieldStore the field storage strategy
-   */
-  protected void indexCommonTodoFields(Document document, T resource, Field.Store fieldStore) {
-    // SEARCHPARAM: context (token)
-    // ELEMENT: (Resource.useContext.value as CodeableConcept)
-    // TODO: Implementation missing
-
-    // SEARCHPARAM: context-quantity (quantity)
-    // ELEMENT: (Resource.useContext.value as Quantity) | (Resource.useContext.value as Range)
-    // TODO: Implementation missing
-
-    // SEARCHPARAM: context-type (token)
-    // ELEMENT: Resource.useContext.code
-    // TODO: Implementation missing
-
-    // SEARCHPARAM: context-type-quantity (composite)
-    // ELEMENT: On Resource.useContext: context-type: code context-quantity: value.as(Quantity) |
-    // value.as(Range)
-    // TODO: Implementation missing
-
-    // SEARCHPARAM: context-type-value (composite)
-    // ELEMENT: On Resource.useContext: context-type: code context: value.as(CodeableConcept)
-    // TODO: Implementation missing
-
-    // SEARCHPARAM: jurisdiction (token)
-    // ELEMENT: Resource.jurisdiction [0..*] (CodeableConcept)
-    // TODO: Implementation missing
   }
 
   /**

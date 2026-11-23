@@ -21,9 +21,13 @@
 package de.gematik.zts.termzilla.api.parameters;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
+import ca.uhn.fhir.rest.param.ReferenceParam;
+import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
+import de.gematik.zts.termzilla.api.exceptions.InvalidSearchParameterException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -58,29 +62,21 @@ class SearchParameterBuilderNormalizationTest {
     }
 
     @Test
-    @DisplayName(
-        "Keeps explicit version untouched and does not split url when version is already set")
-    void keepsExplicitVersionWhenVersionParamAlreadyPresent() {
+    @DisplayName("Rejects duplicate explicit and embedded versions during build")
+    void rejectsDuplicateVersionDuringBuild() {
       // GIVEN
-      UriParam urlParam = TestDataHelper.uriWithVersion();
-      TokenParam explicitVersion = new TokenParam(TestDataHelper.EXPLICIT_VERSION);
+      var builder =
+          TerminologyResourceSearchParameter.builder()
+              .urlParam(TestDataHelper.uriWithVersion())
+              .versionParam(new TokenParam(TestDataHelper.EXPLICIT_VERSION));
 
       // WHEN
-      TerminologyResourceSearchParameter parameter =
-          TerminologyResourceSearchParameter.builder()
-              .urlParam(urlParam)
-              .versionParam(explicitVersion)
-              .build();
+      Throwable thrown = catchThrowable(builder::build);
 
       // THEN
-      assertThat(parameter.getUrl())
-          .get()
-          .extracting(UriParam::getValue)
-          .isEqualTo(TestDataHelper.CANONICAL_WITH_VERSION);
-      assertThat(parameter.getVersion())
-          .get()
-          .extracting(TokenParam::getValue)
-          .isEqualTo(TestDataHelper.EXPLICIT_VERSION);
+      assertThat(thrown)
+          .isInstanceOf(InvalidSearchParameterException.class)
+          .hasMessageContaining("Version must not be set in 'url' parameter");
     }
   }
 
@@ -157,6 +153,184 @@ class SearchParameterBuilderNormalizationTest {
           .extracting(TokenParam::getValue)
           .isEqualTo(TestDataHelper.VERSION);
     }
+  }
+
+  @Test
+  void rejectsSystemAndUrlDuringCodeSystemSearchBuild() {
+    // GIVEN
+    var builder =
+        CsSearchParameter.builder()
+            .systemParam(new UriParam("http://example.org/system"))
+            .urlParam(new UriParam("http://example.org/url"));
+
+    // WHEN
+    Throwable thrown = catchThrowable(builder::build);
+
+    // THEN
+    assertThat(thrown)
+        .isInstanceOf(InvalidSearchParameterException.class)
+        .hasMessageContaining("Either use");
+  }
+
+  @Test
+  void rejectsDuplicateSystemVersionDuringCodeSystemSearchBuild() {
+    // GIVEN
+    var builder =
+        CsSearchParameter.builder()
+            .systemParam(TestDataHelper.uriWithVersion())
+            .versionParam(new TokenParam(TestDataHelper.EXPLICIT_VERSION));
+
+    // WHEN
+    Throwable thrown = catchThrowable(builder::build);
+
+    // THEN
+    assertThat(thrown)
+        .isInstanceOf(InvalidSearchParameterException.class)
+        .hasMessageContaining("Version must not be set in 'system' parameter");
+  }
+
+  @Test
+  void rejectsDuplicateVersionDuringValueSetSearchBuild() {
+    // GIVEN
+    var builder =
+        VsSearchParameter.builder()
+            .urlParam(TestDataHelper.uriWithVersion())
+            .versionParam(new TokenParam(TestDataHelper.EXPLICIT_VERSION));
+
+    // WHEN
+    Throwable thrown = catchThrowable(builder::build);
+
+    // THEN
+    assertThat(thrown).isInstanceOf(InvalidSearchParameterException.class);
+  }
+
+  @Test
+  void rejectsConflictingConceptMapSourceDuringBuild() {
+    // GIVEN
+    var builder =
+        CmSearchParameter.builder()
+            .sourceCanonicalParam(new ReferenceParam("ValueSet/source"))
+            .sourceUriParam(new ReferenceParam("http://example.org/source"));
+
+    // WHEN
+    Throwable thrown = catchThrowable(builder::build);
+
+    // THEN
+    assertThat(thrown)
+        .isInstanceOf(InvalidSearchParameterException.class)
+        .hasMessageContaining(CmSearchParameter.SP_SOURCE_CANONICAL);
+  }
+
+  @Test
+  void contentSearchIsNotAnApiStructuralRestriction() {
+    // GIVEN
+    var builder =
+        CsSearchParameter.builder()
+            .contentParam(new StringParam("not-present"))
+            .codeParam(new TokenParam("12345"));
+
+    // WHEN
+    CsSearchParameter parameter = builder.build();
+
+    // THEN
+    assertThat(parameter.getContent()).isPresent();
+    assertThat(parameter.getCode()).isPresent();
+  }
+
+  @Test
+  void reusedBuilderKeepsVersionAndDoesNotMutateInput() {
+    // GIVEN
+    UriParam system = TestDataHelper.uriWithVersion();
+    var builder = CsSearchParameter.builder().systemParam(system);
+
+    // WHEN
+    CsSearchParameter first = builder.build();
+    CsSearchParameter second = builder.build();
+
+    // THEN
+    assertThat(system.getValue()).isEqualTo(TestDataHelper.CANONICAL_WITH_VERSION);
+    for (CsSearchParameter parameter : java.util.List.of(first, second)) {
+      assertThat(parameter.getSystem().orElseThrow().getValue())
+          .isEqualTo(TestDataHelper.CANONICAL_URL);
+      assertThat(parameter.getVersion().orElseThrow().getValue())
+          .isEqualTo(TestDataHelper.VERSION);
+    }
+  }
+
+  @Test
+  void reusedUrlBuilderKeepsVersionAndDoesNotMutateInput() {
+    // GIVEN
+    UriParam url = TestDataHelper.uriWithVersion();
+    var builder = VsSearchParameter.builder().urlParam(url);
+
+    // WHEN
+    var first = builder.build();
+    var second = builder.build();
+
+    // THEN
+    assertThat(url.getValue()).isEqualTo(TestDataHelper.CANONICAL_WITH_VERSION);
+    assertThat(first.getVersion().orElseThrow().getValue()).isEqualTo(TestDataHelper.VERSION);
+    assertThat(second.getVersion().orElseThrow().getValue()).isEqualTo(TestDataHelper.VERSION);
+  }
+
+  @Test
+  void preservesMissingModifierWithoutValue() {
+    // GIVEN
+    UriParam url = new UriParam();
+    url.setMissing(true);
+
+    // WHEN
+    var parameter = VsSearchParameter.builder().urlParam(url).build();
+
+    // THEN
+    assertThat(parameter.getUrl().orElseThrow().getMissing()).isTrue();
+    assertThat(parameter.getVersion()).isEmpty();
+  }
+
+  @Test
+  void rejectsConflictingConceptMapTargetDuringBuild() {
+    // GIVEN
+    var builder =
+        CmSearchParameter.builder()
+            .targetCanonicalParam(new ReferenceParam("ValueSet/target"))
+            .targetUriParam(new ReferenceParam("http://example.org/target"));
+
+    // WHEN
+    Throwable thrown = catchThrowable(builder::build);
+
+    // THEN
+    assertThat(thrown)
+        .isInstanceOf(InvalidSearchParameterException.class)
+        .hasMessageContaining(CmSearchParameter.SP_TARGET_CANONICAL);
+  }
+
+  @Test
+  void rejectsDuplicateVersionDuringConceptMapBuild() {
+    // GIVEN
+    var builder =
+        CmSearchParameter.builder()
+            .urlParam(TestDataHelper.uriWithVersion())
+            .versionParam(new TokenParam(TestDataHelper.EXPLICIT_VERSION));
+
+    // WHEN
+    Throwable thrown = catchThrowable(builder::build);
+
+    // THEN
+    assertThat(thrown).isInstanceOf(InvalidSearchParameterException.class);
+  }
+
+  @Test
+  void validatesParametersChangedAfterBuild() {
+    // GIVEN
+    CsSearchParameter parameter =
+        CsSearchParameter.builder().urlParam(new UriParam("http://example.org/url")).build();
+    parameter.setSystemParam(new UriParam("http://example.org/system"));
+
+    // WHEN
+    Throwable thrown = catchThrowable(parameter::validate);
+
+    // THEN
+    assertThat(thrown).isInstanceOf(InvalidSearchParameterException.class);
   }
 
   private static final class TestDataHelper {

@@ -37,7 +37,7 @@ import de.gematik.zts.termzilla.api.parameters.CsFindMatchesParameter;
 import de.gematik.zts.termzilla.api.parameters.CsFindMatchesResult;
 import de.gematik.zts.termzilla.api.parameters.model.Match;
 import de.gematik.zts.termzilla.api.parameters.model.PropertyValuePair;
-import de.gematik.zts.termzilla.common.metadatasearch.lucene.querygenerators.PropertyFilter;
+import de.gematik.zts.termzilla.common.metadatasearch.helper.model.PropertyFilter;
 import de.gematik.zts.termzilla.terminologies.common.LanguageSelectionParameter;
 import de.gematik.zts.termzilla.terminologies.snomed.SearchResult;
 import de.gematik.zts.termzilla.terminologies.snomed.Snomed;
@@ -163,13 +163,6 @@ public class SnomedCodeSystemFindMatchesOperation {
     // 1. parent-child-Suchen müssen wir über das Graph-Modell abhandeln
     // 2. Suchen nach display-Texten muss über den Lucene-Index erfolgen
     // 3. Suchen nach code können performant über das InMemory-Modell erfolgen
-    // TODO: Unterstützen weiterer wichtiger property-filter (z.B. inactive, sufficientlyDefined,
-    // designation etc.)
-    //  Das impliziert u.U. aber auch eine Erweiterung des Lucene-Indexes, um kombinierte
-    // Suchanfragen zu stellen.
-    //  Hierzu müssen wir aber sicherlich nochmal auf das Thema Kombinatorik und Relevanzbewertung
-    // schauen, damit
-    //  wir nicht zu viele irrelevante Ergebnisse zurückliefern, wenn wir mehrere Filter haben.
     for (PropertyFilter propertyFilter : propertyFilterList) {
       List<GradedCoding> partial =
           switch (propertyFilter.code()) {
@@ -473,10 +466,6 @@ public class SnomedCodeSystemFindMatchesOperation {
     // Hinzufügen der Match-Objekte zur Ergebnisliste, die mindestens ein Exact- oder Partial-Match
     // haben
     result.getMatchList().addAll(filteredMatchList);
-
-    // TODO: Sortieren der Liste nach Relevanz der Treffer - Hierfür benötigen wir einen eigenen
-    //  Ansatz, der berücksichtigt, welche Art von Match wir haben. Vermutlich sind matches vom Typ
-    //  Code deutlich wichtiger als andere Matches.
 
     return result;
   }

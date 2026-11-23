@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
-import de.gematik.zts.termzilla.common.constants.CanonicalUrl;
+import de.gematik.zts.termzilla.common.constants.StandardTerminologyCanonicalUrls;
 import de.gematik.zts.termzilla.testing.BaseFhirIT;
 import de.gematik.zts.termzilla.testutils.packages.TestPackageHelper;
 import java.nio.file.Path;
@@ -91,7 +91,7 @@ class CodeSystemFindMatchesSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           prepareFindMatchesParams(
-              CanonicalUrl.SNOMEDCT,
+              StandardTerminologyCanonicalUrls.SNOMEDCT,
               SNOMED_VERSION,
               true,
               List.of(property("code", new CodeType(SNOMED_DYSPNOE))));
@@ -102,7 +102,7 @@ class CodeSystemFindMatchesSnomedIT extends BaseFhirIT {
       // THEN
       assertCorrectResponseParameterStructure(result);
       assertThat(extractMatchCodes(result)).containsExactly(SNOMED_DYSPNOE);
-      assertThat(extractCodePart(result).getSystem()).isEqualTo(CanonicalUrl.SNOMEDCT);
+      assertThat(extractCodePart(result).getSystem()).isEqualTo(StandardTerminologyCanonicalUrls.SNOMEDCT);
       assertThat(extractCodePart(result).getVersion()).isEqualTo(SNOMED_VERSION);
     }
 
@@ -113,7 +113,7 @@ class CodeSystemFindMatchesSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           prepareFindMatchesParams(
-              CanonicalUrl.SNOMEDCT,
+              StandardTerminologyCanonicalUrls.SNOMEDCT,
               SNOMED_VERSION,
               true,
               List.of(property("parent", new CodeType(SNOMED_DYSPNOE_PARENT))));
@@ -133,7 +133,7 @@ class CodeSystemFindMatchesSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           prepareFindMatchesParams(
-              CanonicalUrl.SNOMEDCT,
+              StandardTerminologyCanonicalUrls.SNOMEDCT,
               SNOMED_VERSION,
               true,
               List.of(property("child", new CodeType(SNOMED_DYSPNOE))));
@@ -153,7 +153,7 @@ class CodeSystemFindMatchesSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           prepareFindMatchesParams(
-              CanonicalUrl.SNOMEDCT,
+              StandardTerminologyCanonicalUrls.SNOMEDCT,
               SNOMED_VERSION,
               false,
               List.of(property("display", new StringType("Dyspnoe"))));
@@ -177,7 +177,7 @@ class CodeSystemFindMatchesSnomedIT extends BaseFhirIT {
       // GIVEN
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params = new Parameters();
-      params.addParameter().setName("system").setValue(new UriType(CanonicalUrl.SNOMEDCT));
+      params.addParameter().setName("system").setValue(new UriType(StandardTerminologyCanonicalUrls.SNOMEDCT));
       params.addParameter().setName("version").setValue(new StringType(SNOMED_VERSION));
       params.addParameter(property("code", new CodeType(SNOMED_DYSPNOE)));
 
@@ -193,7 +193,7 @@ class CodeSystemFindMatchesSnomedIT extends BaseFhirIT {
       // GIVEN
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params = new Parameters();
-      params.addParameter().setName("system").setValue(new UriType(CanonicalUrl.SNOMEDCT));
+      params.addParameter().setName("system").setValue(new UriType(StandardTerminologyCanonicalUrls.SNOMEDCT));
       params.addParameter().setName("version").setValue(new StringType(SNOMED_VERSION));
       params.addParameter().setName("exact").setValue(new BooleanType(true));
 
@@ -210,7 +210,7 @@ class CodeSystemFindMatchesSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           prepareFindMatchesParams(
-              CanonicalUrl.SNOMEDCT,
+              StandardTerminologyCanonicalUrls.SNOMEDCT,
               SNOMED_VERSION,
               false,
               List.of(
@@ -232,7 +232,7 @@ class CodeSystemFindMatchesSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           prepareFindMatchesParams(
-              CanonicalUrl.SNOMEDCT,
+              StandardTerminologyCanonicalUrls.SNOMEDCT,
               SNOMED_VERSION,
               false,
               List.of(property("designation", new StringType("Dyspnoe"))));
@@ -250,7 +250,7 @@ class CodeSystemFindMatchesSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           prepareFindMatchesParams(
-              CanonicalUrl.SNOMEDCT,
+              StandardTerminologyCanonicalUrls.SNOMEDCT,
               SNOMED_VERSION,
               false,
               List.of(property("display", new CodeType("Dyspnoe"))));
@@ -269,7 +269,7 @@ class CodeSystemFindMatchesSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           prepareFindMatchesParams(
-              CanonicalUrl.SNOMEDCT,
+              StandardTerminologyCanonicalUrls.SNOMEDCT,
               SNOMED_VERSION,
               false,
               List.of(property("display", new StringType("Dy"))));

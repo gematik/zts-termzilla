@@ -30,6 +30,7 @@ import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.IntegerType;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.UriType;
 import org.hl7.fhir.r4.model.ValueSet;
@@ -99,6 +100,27 @@ class CombiningVsExpandParameterValidatorTest {
       assertThatCode(() -> CombiningVsExpandParameterValidator.validateParameters(parameters))
           .doesNotThrowAnyException();
     }
+  }
+
+  @Test
+  void rejectsNegativeCount() {
+    var parameters = urlWithVersion().countParam(new IntegerType(-1)).build();
+    assertThatThrownBy(() -> CombiningVsExpandParameterValidator.validateParameters(parameters))
+        .isInstanceOf(InvalidRequestException.class).hasMessageContaining("count");
+  }
+
+  @Test
+  void rejectsNegativeOffset() {
+    var parameters = urlWithVersion().offsetParam(new IntegerType(-1)).build();
+    assertThatThrownBy(() -> CombiningVsExpandParameterValidator.validateParameters(parameters))
+        .isInstanceOf(InvalidRequestException.class).hasMessageContaining("offset");
+  }
+
+  @Test
+  void acceptsZeroCountWithoutOffset() {
+    var parameters = urlWithVersion().countParam(new IntegerType(0)).build();
+    assertThatCode(() -> CombiningVsExpandParameterValidator.validateParameters(parameters))
+        .doesNotThrowAnyException();
   }
 
   @Nested

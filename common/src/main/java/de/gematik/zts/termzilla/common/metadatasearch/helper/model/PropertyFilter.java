@@ -18,18 +18,27 @@
  * For additional notes and disclaimer from gematik and in case of changes
  * by gematik, find details in the "Readme" file.
  */
-package de.gematik.zts.termzilla.common.constants;
+package de.gematik.zts.termzilla.common.metadatasearch.helper.model;
 
-// TODO this should be renamed to something like "TerminologyCanonicalUrls" or
-// "StandardTerminologyCanonicalUrls" to be more descriptive
-public class CanonicalUrl {
+import java.util.BitSet;
+import org.hl7.fhir.r4.model.Type;
 
-  private CanonicalUrl() {
-    // Private constructor to prevent instantiation
+public record PropertyFilter(String code, Type value, int position) {
+
+  public float getExactMatchBoost() {
+    BitSet bitSet = new BitSet(32);
+    bitSet.set(2 * position);
+    return bitSetToFloat(bitSet);
   }
 
-  public static final String SNOMEDCT = "http://snomed.info/sct";
-  public static final String LOINC = "http://loinc.org";
-  public static final String ICD10GM = "http://fhir.de/CodeSystem/bfarm/icd-10-gm";
-  public static final String OPS = "http://fhir.de/CodeSystem/bfarm/ops";
+  public float getPartialMatchBoost() {
+    BitSet bitSet = new BitSet(32);
+    bitSet.set(2 * position + 1);
+    return bitSetToFloat(bitSet);
+  }
+
+  private static float bitSetToFloat(BitSet bitSet) {
+    long bits = bitSet.toLongArray()[0];
+    return Float.intBitsToFloat((int) bits);
+  }
 }

@@ -38,9 +38,8 @@ public class CombiningCmSearchParameterValidator extends CombiningGenericSearchP
   public static void validateParameters(CmSearchParameter parameters)
       throws IllegalArgumentException {
     failOnUnsupportedParameters(parameters);
-    validateVersion(parameters);
+    parameters.validate();
     validateContent(parameters);
-    validateCanonicalAndUriExclusivity(parameters);
 
     validateBaseParam(
         parameters.getSourceCanonical().orElse(null), CmSearchParameter.SP_SOURCE_CANONICAL);
@@ -77,19 +76,6 @@ public class CombiningCmSearchParameterValidator extends CombiningGenericSearchP
   }
 
   /**
-   * Überprüft, ob die Version bereits in einem anderen Parameter ('url') gesetzt ist. Wenn dies der
-   * Fall ist, wird eine Exception geworfen.
-   *
-   * @param parameters Die Parameter, die überprüft werden sollen
-   * @throws IllegalArgumentException Wenn die Version bereits in einem anderen Parameter gesetzt
-   *     ist
-   */
-  private static void validateVersion(CmSearchParameter parameters)
-      throws IllegalArgumentException {
-    CombiningGenericSearchParameterValidator.validateVersionAgainstUrl(parameters);
-  }
-
-  /**
    * Validates that content parameter does not contain any modifiers.
    *
    * @param parameters the search parameters to validate
@@ -122,30 +108,4 @@ public class CombiningCmSearchParameterValidator extends CombiningGenericSearchP
     }
   }
 
-  /**
-   * Validates that canonical and URI variants are not used at the same time for source and target.
-   *
-   * @param parameters the parameters to validate
-   * @throws IllegalArgumentException if both variants are set for source or target
-   */
-  private static void validateCanonicalAndUriExclusivity(CmSearchParameter parameters)
-      throws IllegalArgumentException {
-    if (parameters.getSourceCanonical().isPresent() && parameters.getSourceUri().isPresent()) {
-      throw new IllegalArgumentException(
-          "Either use '"
-              + CmSearchParameter.SP_SOURCE_CANONICAL
-              + "' or '"
-              + CmSearchParameter.SP_SOURCE_URI
-              + "' parameter, but not both.");
-    }
-
-    if (parameters.getTargetCanonical().isPresent() && parameters.getTargetUri().isPresent()) {
-      throw new IllegalArgumentException(
-          "Either use '"
-              + CmSearchParameter.SP_TARGET_CANONICAL
-              + "' or '"
-              + CmSearchParameter.SP_TARGET_URI
-              + "' parameter, but not both.");
-    }
-  }
 }

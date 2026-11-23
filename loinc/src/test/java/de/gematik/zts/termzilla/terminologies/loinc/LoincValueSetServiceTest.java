@@ -144,6 +144,57 @@ class LoincValueSetServiceTest {
     }
   }
 
+  @Test
+  void shouldExposeRemovedAnswerListAsRetiredMetadataWithoutWholeSystemInclude() {
+    AnswerListVersion removed =
+        LoincTestDataHelper.answerListVersion(ANSWER_LIST_ID, "INACTIVE", "Removed", Set.of());
+    when(loincInMemoryRepresentation.getAnswerListVersion(ANSWER_LIST_ID, loincVersion282))
+        .thenReturn(Optional.of(removed));
+
+    LoincValueSetService service = new LoincValueSetService(loincTerminologyManager);
+    List<ValueSet> versions = service.getValueSetList(TEST_SCOPE, ANSWER_LIST_URL);
+    ValueSet retired =
+        versions.stream()
+            .filter(vs -> VERSION_282.equals(vs.getVersion()))
+            .findFirst()
+            .orElseThrow();
+    ValueSet historical =
+        versions.stream()
+            .filter(vs -> VERSION_281.equals(vs.getVersion()))
+            .findFirst()
+            .orElseThrow();
+
+    assertThat(retired.getStatus()).isEqualTo(Enumerations.PublicationStatus.RETIRED);
+    assertThat(retired.hasCompose()).isFalse();
+    assertThat(service.getValueSetList(TEST_SCOPE, ALL_LOINC_CONCEPTS_URL))
+        .filteredOn(vs -> VERSION_282.equals(vs.getVersion()))
+        .singleElement()
+        .satisfies(
+            vs -> {
+              assertThat(vs.getCompose().getIncludeFirstRep().getSystem())
+                  .isEqualTo("http://loinc.org");
+              assertThat(vs.getCompose().getIncludeFirstRep().hasConcept()).isFalse();
+            });
+    assertThat(historical.getStatus()).isEqualTo(Enumerations.PublicationStatus.ACTIVE);
+    assertThat(historical.getCompose().getIncludeFirstRep().getConcept())
+        .extracting(ValueSet.ConceptReferenceComponent::getCode)
+        .containsExactlyInAnyOrder("LA1", "LA2");
+  }
+
+  @Test
+  void shouldUseUnknownStatusWhenAnswerListStatusIsMissing() {
+    AnswerListVersion unknown =
+        LoincTestDataHelper.answerListVersion(ANSWER_LIST_ID, null, "Unknown", Set.of("LA1"));
+    when(loincInMemoryRepresentation.getAnswerListVersion(ANSWER_LIST_ID, loincVersion282))
+        .thenReturn(Optional.of(unknown));
+
+    LoincValueSetService service = new LoincValueSetService(loincTerminologyManager);
+    assertThat(service.getValueSetList(TEST_SCOPE, ANSWER_LIST_URL))
+        .filteredOn(vs -> VERSION_282.equals(vs.getVersion()))
+        .singleElement()
+        .satisfies(vs -> assertThat(vs.getStatus()).isEqualTo(Enumerations.PublicationStatus.UNKNOWN));
+  }
+
   @Nested
   @DisplayName("isValueSetSupported")
   class IsValueSetSupportedTest {

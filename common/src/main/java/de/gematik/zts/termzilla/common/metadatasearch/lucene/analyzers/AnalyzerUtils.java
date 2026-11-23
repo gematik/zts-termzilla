@@ -40,29 +40,29 @@ public class AnalyzerUtils {
   private static final FhirStringAnalyzerSingleToken analyzer = new FhirStringAnalyzerSingleToken();
 
   public static String normalizePhrase(String phrase) {
-    try {
-      TokenStream stream = analyzer.tokenStream(null, new StringReader(phrase));
+    try (TokenStream stream = analyzer.tokenStream(null, new StringReader(phrase))) {
+      CharTermAttribute termAttribute = stream.getAttribute(CharTermAttribute.class);
       stream.reset();
-      stream.incrementToken();
-      String returnString = stream.getAttribute(CharTermAttribute.class).toString();
-      stream.close();
-      return returnString;
+      boolean hasToken = stream.incrementToken();
+      String normalizedPhrase = hasToken ? termAttribute.toString() : "";
+      stream.end();
+      return normalizedPhrase;
     } catch (IOException e) {
-      log.error("Error normalizing phrase: {}", phrase, e);
+      throw new TokenStreamException("Error normalizing phrase: " + phrase, e);
     }
-
-    return null;
   }
 
   public static List<String> displayTokens(Analyzer analyzer, String string) {
     List<String> result = new ArrayList<>();
-    try {
-      TokenStream stream = analyzer.tokenStream(null, new StringReader(string));
+    try (TokenStream stream = analyzer.tokenStream(null, new StringReader(string))) {
       stream.reset();
       while (stream.incrementToken()) {
-        result.add(stream.getAttribute(CharTermAttribute.class).toString());
+        String term = stream.getAttribute(CharTermAttribute.class).toString();
+        if (!term.isEmpty()) {
+          result.add(term);
+        }
       }
-      stream.close();
+      stream.end();
     } catch (IOException e) {
       // not thrown b/c we're using a string reader...
       throw new TokenStreamException(e);

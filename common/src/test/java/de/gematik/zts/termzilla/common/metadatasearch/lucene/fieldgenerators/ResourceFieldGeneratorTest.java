@@ -529,7 +529,78 @@ class ResourceFieldGeneratorTest {
   @Nested
   @DisplayName("Meta Fields (profile)")
   class MetaProfileTests {
-    // TODO: Add tests for Meta.profile field indexing
+
+    @Test
+    @DisplayName("Should mark profile as missing when Meta is absent")
+    void shouldMarkProfileMissingWhenMetaIsAbsent() {
+      CodeSystem resource = createMinimalResource();
+      Document doc = new Document();
+
+      fieldGenerator.createFields(doc, resource, Field.Store.YES);
+
+      assertTrue(hasField(doc, "_profile_missing"), "_profile_missing field is missing");
+      assertEquals(
+          "true",
+          getFieldValue(doc, "_profile_missing"),
+          "_profile_missing should be true when Meta is absent");
+    }
+
+    @Test
+    @DisplayName("Should mark profile as missing when Meta has no profiles")
+    void shouldMarkProfileMissingWhenMetaHasNoProfiles() {
+      CodeSystem resource = createMinimalResource();
+      resource.setMeta(new Meta());
+      Document doc = new Document();
+
+      fieldGenerator.createFields(doc, resource, Field.Store.YES);
+
+      assertEquals(
+          "true",
+          getFieldValue(doc, "_profile_missing"),
+          "_profile_missing should be true when Meta.profile is empty");
+      assertTrue(
+          getAllFieldValues(doc, "_profile_referenceexact").isEmpty(),
+          "No profile reference should be indexed");
+    }
+
+    @Test
+    @DisplayName("Should index a profile canonical URI exactly")
+    void shouldIndexProfileCanonicalUri() {
+      String profile = "https://example.org/fhir/StructureDefinition/test|1.2.3";
+      CodeSystem resource = createMinimalResource();
+      resource.setMeta(new Meta().addProfile(profile));
+      Document doc = new Document();
+
+      fieldGenerator.createFields(doc, resource, Field.Store.YES);
+
+      assertEquals("false", getFieldValue(doc, "_profile_missing"));
+      assertEquals(
+          List.of(profile),
+          getAllFieldValues(doc, "_profile_referenceexact"),
+          "Canonical profile URL including version should be indexed exactly");
+    }
+
+    @Test
+    @DisplayName("Should index all profiles without creating a sort field")
+    void shouldIndexMultipleProfilesWithoutSortField() {
+      List<String> profiles =
+          List.of(
+              "https://example.org/fhir/StructureDefinition/first",
+              "https://example.org/fhir/StructureDefinition/second|2.0");
+      Meta meta = new Meta();
+      profiles.forEach(meta::addProfile);
+      CodeSystem resource = createMinimalResource();
+      resource.setMeta(meta);
+      Document doc = new Document();
+
+      fieldGenerator.createFields(doc, resource, Field.Store.YES);
+
+      assertEquals(
+          profiles,
+          getAllFieldValues(doc, "_profile_referenceexact"),
+          "All canonical profiles should be indexed");
+      assertTrue(!hasField(doc, "_profile_sort"), "Multi-valued profiles must not be sortable");
+    }
   }
 
   // ========================================================================
@@ -557,6 +628,74 @@ class ResourceFieldGeneratorTest {
   @Nested
   @DisplayName("Meta Fields (security)")
   class MetaSecurityTests {
-    // TODO: Add tests for Meta.security field indexing
+
+    @Test
+    @DisplayName("Should mark security as missing when Meta is absent")
+    void shouldMarkSecurityMissingWhenMetaIsAbsent() {
+      CodeSystem resource = createMinimalResource();
+      Document doc = new Document();
+
+      fieldGenerator.createFields(doc, resource, Field.Store.YES);
+
+      assertTrue(hasField(doc, "_security_missing"), "_security_missing field is missing");
+      assertEquals(
+          "true",
+          getFieldValue(doc, "_security_missing"),
+          "_security_missing should be true when Meta is absent");
+    }
+
+    @Test
+    @DisplayName("Should mark security as missing when Meta has no security labels")
+    void shouldMarkSecurityMissingWhenMetaHasNoSecurityLabels() {
+      CodeSystem resource = createMinimalResource();
+      resource.setMeta(new Meta());
+      Document doc = new Document();
+
+      fieldGenerator.createFields(doc, resource, Field.Store.YES);
+
+      assertEquals(
+          "true",
+          getFieldValue(doc, "_security_missing"),
+          "_security_missing should be true when Meta.security is empty");
+      assertTrue(
+          getAllFieldValues(doc, "_security_lowercaseexact").isEmpty(),
+          "No security tokens should be indexed");
+    }
+
+    @Test
+    @DisplayName("Should index a security label using case-insensitive token formats")
+    void shouldIndexSingleSecurityLabel() {
+      CodeSystem resource = createMinimalResource();
+      Coding security =
+          new Coding("HTTPS://EXAMPLE.ORG/security", "RESTRICTED", "Restricted data");
+      resource.setMeta(new Meta().addSecurity(security));
+      Document doc = new Document();
+
+      fieldGenerator.createFields(doc, resource, Field.Store.YES);
+
+      assertEquals("false", getFieldValue(doc, "_security_missing"));
+      List<String> securityTokens = getAllFieldValues(doc, "_security_lowercaseexact");
+      assertEquals(3, securityTokens.size());
+      assertTrue(securityTokens.contains("https://example.org/security|"));
+      assertTrue(securityTokens.contains("restricted"));
+      assertTrue(securityTokens.contains("https://example.org/security|restricted"));
+    }
+
+    @Test
+    @DisplayName("Should index all security labels")
+    void shouldIndexMultipleSecurityLabels() {
+      Coding first = new Coding("https://example.org/security", "one", "First label");
+      Coding second = new Coding("https://example.org/classification", "two", "Second label");
+      CodeSystem resource = createMinimalResource();
+      resource.setMeta(new Meta().addSecurity(first).addSecurity(second));
+      Document doc = new Document();
+
+      fieldGenerator.createFields(doc, resource, Field.Store.YES);
+
+      List<String> securityTokens = getAllFieldValues(doc, "_security_lowercaseexact");
+      assertEquals(6, securityTokens.size());
+      assertTrue(securityTokens.contains("https://example.org/security|one"));
+      assertTrue(securityTokens.contains("https://example.org/classification|two"));
+    }
   }
 }

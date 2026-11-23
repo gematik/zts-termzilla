@@ -44,6 +44,8 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import de.gematik.zts.termzilla.api.exceptions.NotImplementedException;
 import java.util.List;
 import java.util.stream.Stream;
+
+import de.gematik.zts.termzilla.common.metadatasearch.helper.model.PropertyFilter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;

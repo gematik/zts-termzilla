@@ -69,7 +69,6 @@ public class FhirTermsCodeSystemSearchOperation {
     // Wir starten mit der Suche nach Codes, falls ein Code-Parameter übergeben wurde
     var codeOpt = csSearchParameter.getCode();
     if (codeOpt.isPresent()) {
-      // TODO this is not working for a reason
       List<IdType> codeSearchResultList = searchCodeSystemsByCode(scope, codeOpt.get(), null);
 
       // Wenn die Ergebnisliste leer ist, dann brauchen wir auch nicht mehr nach anderen

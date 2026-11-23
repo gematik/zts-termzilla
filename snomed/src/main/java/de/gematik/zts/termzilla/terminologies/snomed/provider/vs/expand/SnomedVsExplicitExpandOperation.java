@@ -66,7 +66,6 @@ import org.snomed.langauges.ecl.domain.refinement.Operator;
 import org.snomed.languages.scg.domain.model.Expression;
 
 // TODO: Doppelte Konzepte (z.B. bei 2 ECLs) aussortieren
-// TODO: Refactoring
 
 /**
  * Handles the expansion of SNOMED CT ValueSet include/exclude elements as part of the FHIR {@code
@@ -249,13 +248,6 @@ public class SnomedVsExplicitExpandOperation {
             includeInactiveConcepts,
             vsExpandIncludeResult.getConceptBaseInfos());
       } else {
-        // Variante 2: Es gibt keinen Filter
-        // TODO: Hier müssen wir eigentlich alle Konzepte des angegebenen Systems zurückgeben.
-        //  Das ist aktuell nicht gewünscht und aus Performance-Grüngen vermutlich auch ein
-        // Desaster.
-        //  Vielleicht müssen wir das perspektivisch nochmal überdenken, sobald die Filter-Variante
-        //  implementiert ist. Aktuell werfen wir hier einfach eine Exception.
-
         throw new InvalidRequestException(
             "The given ValueSet definition includes all SNOMED concepts. This is currently not supported by the SNOMED ValueSet Expansion.");
       }
@@ -514,7 +506,6 @@ public class SnomedVsExplicitExpandOperation {
             processConstraintFilter(
                 filter, system, releaseVersion, includeInactiveConcepts, filterResultSet);
         case "expressions" ->
-            // TODO
             throw new InvalidRequestException(
                 "The given ValueSet definition includes a filter with an unsupported property (expressions). This is currently not supported by the SNOMED ValueSet Expansion.");
         case PROPERTY_NAME_PARENT ->
@@ -524,7 +515,6 @@ public class SnomedVsExplicitExpandOperation {
             processChildFilter(
                 filter, system, releaseVersion, includeInactiveConcepts, filterResultSet);
         default ->
-            // TODO
             throw new InvalidRequestException(
                 "The given ValueSet definition includes a filter with an unsupported property. This is currently not supported by the SNOMED ValueSet Expansion.");
       }
@@ -546,7 +536,6 @@ public class SnomedVsExplicitExpandOperation {
             : applyResultFilter(includeResultSet, system, releaseVersion, resultFilter));
   }
 
-  // TODO check if this can be done differently / more efficiently.
   private Set<ConceptBaseInfo> applyResultFilter(
       Set<ConceptBaseInfo> conceptSet,
       String system,
@@ -747,7 +736,6 @@ public class SnomedVsExplicitExpandOperation {
    *     invalid
    */
   @SuppressWarnings("java:S1172") // will be used once imlpemented
-  // TODO implement inactive concepts
   private void processConstraintFilter(
       ValueSet.ConceptSetFilterComponent filter,
       String includeElementSystem,
@@ -797,7 +785,6 @@ public class SnomedVsExplicitExpandOperation {
    *     fails
    */
   @SuppressWarnings("java:S1172") // will be used once imlpemented
-  // TODO implement inactive concepts
   private void processParentFilter(
       ValueSet.ConceptSetFilterComponent filter,
       String includeElementSystem,
@@ -850,7 +837,6 @@ public class SnomedVsExplicitExpandOperation {
    *     fails
    */
   @SuppressWarnings("java:S1172") // will be used once imlpemented
-  // TODO implement inactive concepts
   private void processChildFilter(
       ValueSet.ConceptSetFilterComponent filter,
       String includeElementSystem,

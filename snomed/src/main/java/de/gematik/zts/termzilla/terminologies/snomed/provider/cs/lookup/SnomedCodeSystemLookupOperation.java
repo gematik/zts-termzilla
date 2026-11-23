@@ -33,7 +33,7 @@ import de.gematik.zts.termzilla.api.interfaces.properties.BaseTypeConceptPropert
 import de.gematik.zts.termzilla.api.interfaces.properties.ConceptProperties;
 import de.gematik.zts.termzilla.api.parameters.CsLookupParameter;
 import de.gematik.zts.termzilla.api.parameters.CsLookupResult;
-import de.gematik.zts.termzilla.common.constants.CanonicalUrl;
+import de.gematik.zts.termzilla.common.constants.StandardTerminologyCanonicalUrls;
 import de.gematik.zts.termzilla.common.helper.LanguageRegistry;
 import de.gematik.zts.termzilla.terminologies.common.LanguageParameter;
 import de.gematik.zts.termzilla.terminologies.common.LanguageSelectionParameter;
@@ -272,8 +272,6 @@ public class SnomedCodeSystemLookupOperation {
         Expression expression = expressionParser.parseExpression(code);
         demisSCGProcessor.validateAgainstMRCM(expression, releaseVersion);
         conceptIsExpression = true;
-        // TODO: Aktuell berücksichtigen wir hier noch nicht den Sprachparameter. Dies macht den
-        //  Umbau des SCGProcessors notwendig.
         designationManager.collectDesignationsFromSnomedExpression(
             expression, releaseVersion, snomedCsService.getSnomedTerminologyManager());
 
@@ -379,7 +377,7 @@ public class SnomedCodeSystemLookupOperation {
           .getProperties()
           .add(
               new BaseTypeConceptProperty(
-                  ConceptProperties.PROPERTY_NAME_URL, new StringType(CanonicalUrl.SNOMEDCT)));
+                  ConceptProperties.PROPERTY_NAME_URL, new StringType(StandardTerminologyCanonicalUrls.SNOMEDCT)));
     }
 
     // Hinzufügen der 'child' properties

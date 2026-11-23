@@ -23,6 +23,7 @@ package de.gematik.zts.termzilla.terminologies.fhirterms.config;
 import de.gematik.zts.termzilla.common.config.Value;
 import de.gematik.zts.termzilla.common.config.provision.ProvisionAware;
 import de.gematik.zts.termzilla.common.config.provision.ProvisionMode;
+import de.gematik.zts.termzilla.terminologies.fhirterms.config.loading.LoadingMode;
 import de.gematik.zts.termzilla.terminologies.fhirterms.config.packageserver.PackageServerConfig;
 import de.gematik.zts.termzilla.terminologies.fhirterms.config.packageserver.PackageServerConfigEntry;
 import de.gematik.zts.termzilla.terminologies.fhirterms.config.provision.ProvisionSettings;
@@ -52,10 +53,6 @@ public class FhirConfigProperties implements ProvisionAware {
   @Value("${fhirterms.start:false}")
   private boolean fhirTermsStart;
 
-  // TODO: not used anymore
-  @Value("${fhirterms.loadDependencies:false}")
-  private boolean fhirTermsLoadDependencies;
-
   @Value("${fhirterms.packageFolderLocation}")
   private String fhirTermsPackageFolderLocation;
 
@@ -67,6 +64,9 @@ public class FhirConfigProperties implements ProvisionAware {
 
   @Value("${fhirterms.packageAutoDownloadEnabled:false}")
   private boolean packageAutoDownloadEnabled;
+
+  @Value("${fhirterms.loadingMode:LENIENT}")
+  private LoadingMode loadingMode;
 
   /** Typed package server configuration loaded via a custom converter. */
   @Value("${fhirterms.packageServerConfig:__AUTO__}")

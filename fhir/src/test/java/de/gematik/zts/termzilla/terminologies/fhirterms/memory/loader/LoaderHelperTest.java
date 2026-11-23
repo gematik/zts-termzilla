@@ -21,7 +21,9 @@
 package de.gematik.zts.termzilla.terminologies.fhirterms.memory.loader;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import de.gematik.zts.termzilla.terminologies.fhirterms.exceptions.ResourceLoadingException;
 import de.gematik.zts.termzilla.terminologies.fhirterms.fhirpackage.model.packagemanifest.PackageManifest;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -304,22 +306,23 @@ class LoaderHelperTest {
     }
 
     @Test
-    @DisplayName("Should generate random UUID when resource URL is null")
-    void shouldGenerateRandomUuidWhenUrlIsNull() {
+    @DisplayName("Should throw ResourceLoadingException when resource URL is null")
+    void shouldThrowResourceLoadingExceptionWhenUrlIsNull() {
       // GIVEN
       ValueSet valueSet1 = createValueSet(null, TEST_VERSION);
       ValueSet valueSet2 = createValueSet(null, TEST_VERSION);
       PackageManifest manifest = createManifest(TEST_PACKAGE_NAME, TEST_PACKAGE_VERSION);
 
-      // WHEN
-      LoaderHelper.applyNewId(valueSet1, TEST_RESOURCE_HASH, manifest);
-      LoaderHelper.applyNewId(valueSet2, TEST_RESOURCE_HASH, manifest);
+      // WHEN and THEN
+      assertThatThrownBy(
+          () -> LoaderHelper.applyNewId(valueSet1, TEST_RESOURCE_HASH, manifest))
+          .isInstanceOf(ResourceLoadingException.class)
+          .hasMessageContaining("Cannot generate UUID");
 
-      // THEN
-      assertThat(valueSet1.getIdPart()).as("Should generate a valid UUID for null URL").isNotNull();
-      assertThat(valueSet1.getIdPart())
-          .as("Random UUIDs should differ across invocations")
-          .isNotEqualTo(valueSet2.getIdPart());
+      assertThatThrownBy(
+          () -> LoaderHelper.applyNewId(valueSet2, TEST_RESOURCE_HASH, manifest))
+          .isInstanceOf(ResourceLoadingException.class)
+          .hasMessageContaining("Cannot generate UUID");
     }
 
     @Test

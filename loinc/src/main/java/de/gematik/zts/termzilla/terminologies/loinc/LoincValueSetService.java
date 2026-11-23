@@ -42,8 +42,10 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MultiValuedMap;
 import org.hl7.fhir.r4.model.Enumerations;
+import org.hl7.fhir.r4.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r4.model.IdType;
 import org.hl7.fhir.r4.model.ValueSet;
+import org.jspecify.annotations.NonNull;
 
 @Slf4j
 public class LoincValueSetService implements ValueSetSvcInterface {
@@ -136,24 +138,36 @@ public class LoincValueSetService implements ValueSetSvcInterface {
           valueSet.setTitle(answerListVersion.getAnswerListName());
           valueSet.setDescription("LOINC Answer List for " + answerListVersion.getAnswerListName());
 
-          // TODO: set status based on answerListVersion.getStatus()
-          valueSet.setStatus(Enumerations.PublicationStatus.ACTIVE);
+          valueSet.setStatus(getStatusOfAnswerListVersion(answerListVersion));
 
-          ValueSet.ConceptSetComponent include = new ValueSet.ConceptSetComponent();
-          include.setSystem("http://loinc.org");
-          include.setVersion(loincVersion.getVersionString());
-          for (String answerId : answerListVersion.getAnswerIds()) {
-            include.addConcept().setCode(answerId);
+          // A removed answer list has no members. A system-only include would select all LOINC
+          // codes, so expose only metadata when no membership definition is available.
+          if (!answerListVersion.getAnswerIds().isEmpty()) {
+            ValueSet.ConceptSetComponent include = new ValueSet.ConceptSetComponent();
+            include.setSystem("http://loinc.org");
+            include.setVersion(loincVersion.getVersionString());
+            for (String answerId : answerListVersion.getAnswerIds()) {
+              include.addConcept().setCode(answerId);
+            }
+
+            ValueSet.ValueSetComposeComponent compose = new ValueSet.ValueSetComposeComponent();
+            compose.addInclude(include);
+            valueSet.setCompose(compose);
           }
-
-          ValueSet.ValueSetComposeComponent compose = new ValueSet.ValueSetComposeComponent();
-          compose.addInclude(include);
-          valueSet.setCompose(compose);
 
           valueSetMap.put(valueSet.getId(), valueSet);
         }
       }
     }
+  }
+
+  private static Enumerations.@NonNull PublicationStatus getStatusOfAnswerListVersion(
+      AnswerListVersion answerListVersion) {
+    return switch (answerListVersion.getStatus() == null ? "" : answerListVersion.getStatus()) {
+      case "ACTIVE" -> PublicationStatus.ACTIVE;
+      case "INACTIVE" -> PublicationStatus.RETIRED;
+      default -> PublicationStatus.UNKNOWN;
+    };
   }
 
   // --------------------------------------------------------------------------------

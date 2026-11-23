@@ -38,7 +38,7 @@ public class CombiningVsSearchParameterValidator extends CombiningGenericSearchP
   public static void validateParameters(VsSearchParameter parameters)
       throws IllegalArgumentException {
     failOnUnsupportedParameters(parameters);
-    validateVersion(parameters);
+    parameters.validate();
     validateContent(parameters);
     validateReference(parameters);
   }
@@ -53,19 +53,6 @@ public class CombiningVsSearchParameterValidator extends CombiningGenericSearchP
       throws InvalidRequestException {
     CombiningGenericSearchParameterValidator.failOnUnsupportedParameters(
         parameters.getExpansion().isPresent(), VsSearchParameter.SP_EXPANSION);
-  }
-
-  /**
-   * Überprüft, ob die Version bereits in einem anderen Parameter ('url') gesetzt ist. Wenn dies der
-   * Fall ist, wird eine Exception geworfen.
-   *
-   * @param parameters Die Parameter, die überprüft werden sollen
-   * @throws IllegalArgumentException Wenn die Version bereits in einem anderen Parameter gesetzt
-   *     ist
-   */
-  private static void validateVersion(VsSearchParameter parameters)
-      throws IllegalArgumentException {
-    CombiningGenericSearchParameterValidator.validateVersionAgainstUrl(parameters);
   }
 
   /**

@@ -98,19 +98,9 @@ class DomainResourceFieldGeneratorTest {
     return doc.getField(fieldName) != null;
   }
 
-  // ========================================================================
-  // TEIL 1: Text/Narrative Tests
-  // ========================================================================
-
-  @Nested
-  @DisplayName("Text/Narrative (_text)")
-  class TextNarrativeTests {
-    // TODO: Implementiere Tests für das text Feld. Aktuell verwenden wir dieses Feld nicht aktiv
-    //  und auch der Suchparameter ist meines Wissens nach nicht in Gebrauch.
-  }
 
   // ========================================================================
-  // TEIL 2: Effective Period Extension Tests (R5 Backport)
+  // Effective Period Extension Tests (R5 Backport)
   // ========================================================================
 
   @Nested

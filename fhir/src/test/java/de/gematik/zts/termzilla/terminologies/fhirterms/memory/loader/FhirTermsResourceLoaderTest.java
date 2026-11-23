@@ -21,15 +21,18 @@
 package de.gematik.zts.termzilla.terminologies.fhirterms.memory.loader;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import de.gematik.zts.termzilla.api.exceptions.InvalidConfigurationException;
-import de.gematik.zts.termzilla.common.constants.CanonicalUrl;
+import de.gematik.zts.termzilla.common.constants.StandardTerminologyCanonicalUrls;
 import de.gematik.zts.termzilla.terminologies.fhirterms.config.FhirConfigProperties;
+import de.gematik.zts.termzilla.terminologies.fhirterms.config.loading.LoadingMode;
 import de.gematik.zts.termzilla.terminologies.fhirterms.exceptions.ResourceLoadingException;
+import de.gematik.zts.termzilla.terminologies.fhirterms.fhirpackage.helper.FhirPackageHelper;
 import de.gematik.zts.termzilla.terminologies.fhirterms.memory.FhirTermsInMemoryRepresentation;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -37,6 +40,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -177,6 +181,179 @@ class FhirTermsResourceLoaderTest {
 
       // THEN
       assertThat(resourceMap).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should propagate duplicate resource exception from package without index")
+    void shouldPropagateDuplicateResourceExceptionFromPackageWithoutIndex() throws IOException {
+      // GIVEN
+      Path packageDirectory = tempDir.resolve("source-package").resolve("package");
+      Files.createDirectories(packageDirectory);
+      Files.writeString(
+          packageDirectory.resolve("package.json"),
+          """
+          {"name":"test.package","version":"1.0.0"}
+          """);
+      String valueSetJson =
+          """
+          {"resourceType":"ValueSet","id":"duplicate","url":"http://example.com/valueset","version":"1.0.0","status":"active"}
+          """;
+      Files.writeString(packageDirectory.resolve("first.json"), valueSetJson);
+      Files.writeString(packageDirectory.resolve("second.json"), valueSetJson);
+
+      Path tarFile =
+          FhirPackageHelper.createTarArchive(
+              "test-package.tar", tempDir, packageDirectory);
+      FhirPackageHelper.compress(tarFile, packageFolder.resolve("test-package-1.0.0.tgz"));
+
+      // WHEN / THEN
+      assertThatThrownBy(loader::load)
+          .isInstanceOf(ResourceLoadingException.class)
+          .hasMessageContaining("already exists");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"good-package.tgz", "no_version.tgz", "bad_version-x.1.aa.tar.gz", "bad-delimiter#1.0.0.tgz"})
+    @DisplayName("Should not crash on invalid package names")
+    void shouldNotCrashOnInvalidPackageNames(String tarName) throws IOException{
+      // GIVEN
+      Files.createFile(packageFolder.resolve(tarName));
+
+      // THEN
+      assertThatNoException().isThrownBy(
+          () -> loader.load());
+    }
+
+    @Test
+    @DisplayName("Should skip unhealthy CodeSystem and continue loading in LENIENT mode")
+    void shouldSkipUnhealthyCodeSystemInLenientMode() throws IOException {
+      // GIVEN
+      when(mockProperties.getLoadingMode()).thenReturn(LoadingMode.LENIENT);
+      createPackageWithUnhealthyAndHealthyCodeSystems();
+
+      // WHEN / THEN
+      assertThatNoException().isThrownBy(loader::load);
+      assertThat(resourceMap.values())
+          .extracting(MetadataResource::getUrl)
+          .containsExactly("http://example.com/healthy");
+    }
+
+    @Test
+    @DisplayName("Should abort loading on unhealthy CodeSystem in STRICT mode")
+    void shouldAbortLoadingForUnhealthyCodeSystemInStrictMode() throws IOException {
+      // GIVEN
+      when(mockProperties.getLoadingMode()).thenReturn(LoadingMode.STRICT);
+      createPackageWithUnhealthyAndHealthyCodeSystems();
+
+      // WHEN / THEN
+      assertThatThrownBy(loader::load)
+          .isInstanceOf(ResourceLoadingException.class)
+          .hasMessageContaining("http://example.com/unhealthy")
+          .hasMessageContaining("version null")
+          .hasMessageContaining("does not meet quality requirements");
+      assertThat(resourceMap).isEmpty();
+    }
+
+    private void createPackageWithUnhealthyAndHealthyCodeSystems() throws IOException {
+      Path packageDirectory = tempDir.resolve("source-package").resolve("package");
+      Files.createDirectories(packageDirectory);
+      Files.writeString(
+          packageDirectory.resolve("package.json"),
+          """
+          {"name":"test.package","version":"1.0.0"}
+          """);
+      Files.writeString(
+          packageDirectory.resolve(".index.json"),
+          """
+          {"index-version":1,"files":[
+            {"filename":"unhealthy.json","resourceType":"CodeSystem"},
+            {"filename":"healthy.json","resourceType":"CodeSystem"}
+          ]}
+          """);
+      Files.writeString(
+          packageDirectory.resolve("unhealthy.json"),
+          """
+          {"resourceType":"CodeSystem","url":"http://example.com/unhealthy","status":"active","content":"complete"}
+          """);
+      Files.writeString(
+          packageDirectory.resolve("healthy.json"),
+          """
+          {"resourceType":"CodeSystem","url":"http://example.com/healthy","version":"1.0.0","status":"active","content":"complete"}
+          """);
+
+      Path tarFile =
+          FhirPackageHelper.createTarArchive("test-package.tar", tempDir, packageDirectory);
+      FhirPackageHelper.compress(tarFile, packageFolder.resolve("test-package-1.0.0.tgz"));
+    }
+  }
+
+  @Nested
+  @DisplayName("Tarball Sorting Tests")
+  class TarballSortingTests {
+
+    private FhirTermsResourceLoader loader;
+
+    @BeforeEach
+    void setUp() throws InvalidConfigurationException {
+      when(mockProperties.getFhirTermsPackageFolderLocation()).thenReturn(PACKAGE_FOLDER_LOCATION);
+      when(mockProperties.getFhirTermsUnzipLocation()).thenReturn(Path.of(UNZIP_LOCATION));
+
+      loader = new FhirTermsResourceLoader(mockProperties, mockInMemoryRepresentation);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {".tgz", ".tar.gz"})
+    @DisplayName("Should sort packages ascending and semantic versions descending")
+    void shouldSortPackagesAscendingAndSemanticVersionsDescending(String extension) {
+      // GIVEN
+      Path beta = tempDir.resolve("beta-9.0.0" + extension);
+      Path alphaOlder = tempDir.resolve("alpha-1.9.0" + extension);
+      Path alphaNewer = tempDir.resolve("alpha-1.10.0" + extension);
+      Path alphaNewest = tempDir.resolve("alpha-2.0.0" + extension);
+      Path gammaOld = tempDir.resolve("gamma-0.1.0-rc1" + extension);
+      Path gammaNew = tempDir.resolve("gamma-0.1.0-rc2" + extension);
+      List<Path> tarballs = List.of(beta, alphaOlder, alphaNewest, alphaNewer, gammaOld, gammaNew);
+
+      // WHEN
+      List<Path> sortedTarballs = loader.sortTarballs(tarballs);
+
+      // THEN
+      assertThat(sortedTarballs)
+          .containsExactly(alphaNewest, alphaNewer, alphaOlder, beta, gammaNew, gammaOld);
+    }
+
+    @Test
+    @DisplayName("Should sort non-semantic versions lexically after semantic versions")
+    void shouldSortNonSemanticVersionsLexicallyAfterSemanticVersions() {
+      // GIVEN
+      Path semanticVersion = tempDir.resolve("alpha-1.0.0.tgz");
+      Path lexicalFirst = tempDir.resolve("alpha-zeta.tgz");
+      Path lexicalLast = tempDir.resolve("alpha-draft.tar.gz");
+      Path beta = tempDir.resolve("beta-2.0.0.tgz");
+      List<Path> tarballs = List.of(beta, lexicalLast, lexicalFirst, semanticVersion);
+
+      // WHEN
+      List<Path> sortedTarballs = loader.sortTarballs(tarballs);
+
+      // THEN
+      assertThat(sortedTarballs)
+          .containsExactly(semanticVersion, lexicalFirst, lexicalLast, beta);
+    }
+
+    @Test
+    @DisplayName("Should append unparseable filenames without losing or duplicating paths")
+    void shouldAppendUnparseableFilenamesWithoutLosingOrDuplicatingPaths() {
+      // GIVEN
+      Path noVersion = tempDir.resolve("no_version.tgz");
+      Path missingDelimiter = tempDir.resolve("package#1.0.0.tar.gz");
+      Path validPackage = tempDir.resolve("alpha-1.0.0.tgz");
+      List<Path> tarballs = List.of(noVersion, validPackage, missingDelimiter);
+
+      // WHEN
+      List<Path> sortedTarballs = loader.sortTarballs(tarballs);
+
+      // THEN
+      assertThat(sortedTarballs).containsExactly(validPackage, noVersion, missingDelimiter);
     }
   }
 
@@ -320,8 +497,8 @@ class FhirTermsResourceLoaderTest {
 
     private static Stream<Arguments> provideSnomedAndLoincUrls() {
       return Stream.of(
-          Arguments.of(CanonicalUrl.SNOMEDCT, "SNOMED CT"),
-          Arguments.of(CanonicalUrl.LOINC, "LOINC"));
+          Arguments.of(StandardTerminologyCanonicalUrls.SNOMEDCT, "SNOMED CT"),
+          Arguments.of(StandardTerminologyCanonicalUrls.LOINC, "LOINC"));
     }
 
     // Helper method to invoke private isHealthyCodeSystem method

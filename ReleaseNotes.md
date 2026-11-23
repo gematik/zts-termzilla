@@ -2,7 +2,15 @@
 
 # Release Notes termzilla
 
-## Release 1.1.0 (2026-10)
+## Release 1.1.1 (2026-11)
+
+### fixed
+
+- Docker Image in `compose-test.yaml`
+- Removed TODOs
+- Updated Docker Image
+
+## Release 1.1.0 (2026-11)
 
 ### added
 

@@ -21,9 +21,11 @@
 package de.gematik.zts.termzilla.server.service.vs;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,13 +33,17 @@ import static org.mockito.Mockito.when;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
+import de.gematik.zts.termzilla.api.exceptions.UnsupportedTerminologyException;
 import de.gematik.zts.termzilla.api.parameters.CsValidateCodeParameter;
 import de.gematik.zts.termzilla.api.parameters.ValidateCodeResult;
+import de.gematik.zts.termzilla.api.parameters.VsExpandParameter;
 import de.gematik.zts.termzilla.api.parameters.VsValidateCodeParameter;
+import de.gematik.zts.termzilla.configuration.ConfigProperties;
 import de.gematik.zts.termzilla.server.cache.TerminologyCacheManager;
 import de.gematik.zts.termzilla.server.service.CombiningTerminologyService;
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.CodeSystem;
+import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -68,6 +74,7 @@ class CombiningVsValidateCodeOperationTest {
       TerminologyCacheManager cacheManager = new TerminologyCacheManager();
       CombiningTerminologyService terminologyService = mock(CombiningTerminologyService.class);
       when(terminologyService.getCacheManager()).thenReturn(cacheManager);
+      when(terminologyService.getConfigProperties()).thenReturn(new ConfigProperties());
       when(terminologyService.expandValueSet(eq(SCOPE), any()))
           .thenReturn(VsValidateCodeTestDataHelper.createExpansionValueSet());
       when(terminologyService.getDefaultCodeSystemByScopeAndUrl(SCOPE, CODE_SYSTEM_URL))
@@ -101,6 +108,7 @@ class CombiningVsValidateCodeOperationTest {
       TerminologyCacheManager cacheManager = new TerminologyCacheManager();
       CombiningTerminologyService terminologyService = mock(CombiningTerminologyService.class);
       when(terminologyService.getCacheManager()).thenReturn(cacheManager);
+      when(terminologyService.getConfigProperties()).thenReturn(new ConfigProperties());
       when(terminologyService.expandValueSet(eq(SCOPE), any()))
           .thenReturn(VsValidateCodeTestDataHelper.createExpansionValueSet());
       when(terminologyService.getDefaultCodeSystemByScopeAndUrl(SCOPE, CODE_SYSTEM_URL))
@@ -150,6 +158,7 @@ class CombiningVsValidateCodeOperationTest {
       TerminologyCacheManager cacheManager = new TerminologyCacheManager();
       CombiningTerminologyService terminologyService = mock(CombiningTerminologyService.class);
       when(terminologyService.getCacheManager()).thenReturn(cacheManager);
+      when(terminologyService.getConfigProperties()).thenReturn(new ConfigProperties());
       when(terminologyService.expandValueSet(eq(SCOPE), any()))
           .thenReturn(VsValidateCodeTestDataHelper.createExpansionValueSet());
       when(terminologyService.getDefaultCodeSystemByScopeAndUrl(SCOPE, CODE_SYSTEM_URL))
@@ -185,6 +194,7 @@ class CombiningVsValidateCodeOperationTest {
       TerminologyCacheManager cacheManager = new TerminologyCacheManager();
       CombiningTerminologyService terminologyService = mock(CombiningTerminologyService.class);
       when(terminologyService.getCacheManager()).thenReturn(cacheManager);
+      when(terminologyService.getConfigProperties()).thenReturn(new ConfigProperties());
       when(terminologyService.expandValueSet(eq(SCOPE), any()))
           .thenReturn(VsValidateCodeTestDataHelper.createExpansionValueSet());
       when(terminologyService.getDefaultCodeSystemByScopeAndUrl(SCOPE, CODE_SYSTEM_URL))
@@ -207,6 +217,129 @@ class CombiningVsValidateCodeOperationTest {
       verify(terminologyService, times(1))
           .validateCode(eq(SCOPE), any(CsValidateCodeParameter.class));
     }
+  }
+
+  @Test
+  void rejectsIncompleteExpansionRatherThanReturningFalse() throws Exception {
+    CombiningTerminologyService service = mock(CombiningTerminologyService.class);
+    when(service.getCacheManager()).thenReturn(new TerminologyCacheManager());
+    ConfigProperties config = new ConfigProperties();
+    config.setExpansionDefaultCount(1);
+    config.setExpansionMaximumCount(2);
+    when(service.getConfigProperties()).thenReturn(config);
+    ValueSet partial = VsValidateCodeTestDataHelper.createExpansionValueSet();
+    partial.getExpansion().setTotal(3);
+    when(service.expandValueSet(eq(SCOPE), any())).thenReturn(partial);
+    // The explicit system is resolved before the expansion is loaded.
+    when(service.getDefaultCodeSystemByScopeAndUrl(SCOPE, CODE_SYSTEM_URL))
+        .thenReturn(VsValidateCodeTestDataHelper.createCodeSystem());
+
+    assertThatThrownBy(() -> CombiningVsValidateCodeOperation.validateCode(
+        service, VsValidateCodeTestDataHelper.createVsValidateCodeParameterWithoutDisplay(), SCOPE))
+        .isInstanceOf(UnsupportedTerminologyException.class)
+        .hasMessageContaining("incomplete ValueSet expansion");
+    ArgumentCaptor<VsExpandParameter> captor = ArgumentCaptor.forClass(VsExpandParameter.class);
+    verify(service).expandValueSet(eq(SCOPE), captor.capture());
+    assertThat(captor.getValue().getCountParam().getValue()).isEqualTo(2);
+    assertThat(captor.getValue().getExcludeNestedParam().booleanValue()).isTrue();
+    verify(service, never()).validateCode(eq(SCOPE), any(CsValidateCodeParameter.class));
+  }
+
+  @Test
+  void rejectsExpansionWithoutTotal() throws Exception {
+    CombiningTerminologyService service = mock(CombiningTerminologyService.class);
+    when(service.getCacheManager()).thenReturn(new TerminologyCacheManager());
+    when(service.getConfigProperties()).thenReturn(new ConfigProperties());
+    ValueSet expansion = VsValidateCodeTestDataHelper.createExpansionValueSet();
+    expansion.getExpansion().setTotalElement(null);
+    when(service.expandValueSet(eq(SCOPE), any())).thenReturn(expansion);
+    when(service.getDefaultCodeSystemByScopeAndUrl(SCOPE, CODE_SYSTEM_URL))
+        .thenReturn(VsValidateCodeTestDataHelper.createCodeSystem());
+
+    assertThatThrownBy(
+            () -> CombiningVsValidateCodeOperation.validateCode(
+                service, VsValidateCodeTestDataHelper.createVsValidateCodeParameterWithoutDisplay(), SCOPE))
+        .isInstanceOf(UnsupportedTerminologyException.class)
+        .hasMessageContaining("incomplete ValueSet expansion");
+  }
+
+  @Test
+  void returnsFalseForCodeAbsentFromCompleteExpansion() throws Exception {
+    CombiningTerminologyService service = mock(CombiningTerminologyService.class);
+    when(service.getCacheManager()).thenReturn(new TerminologyCacheManager());
+    when(service.getConfigProperties()).thenReturn(new ConfigProperties());
+    ValueSet expansion = VsValidateCodeTestDataHelper.createExpansionValueSet();
+    expansion.getExpansion().getContainsFirstRep().setCode("different-code");
+    when(service.expandValueSet(eq(SCOPE), any())).thenReturn(expansion);
+    when(service.getDefaultCodeSystemByScopeAndUrl(SCOPE, CODE_SYSTEM_URL))
+        .thenReturn(VsValidateCodeTestDataHelper.createCodeSystem());
+
+    ValidateCodeResult result = CombiningVsValidateCodeOperation.validateCode(
+        service, VsValidateCodeTestDataHelper.createVsValidateCodeParameterWithoutDisplay(), SCOPE);
+    assertThat(result.isResult()).isFalse();
+  }
+
+  @Test
+  void rejectsExpansionWithNonZeroOffset() throws Exception {
+    ValueSet valueSet = VsValidateCodeTestDataHelper.createExpansionValueSet();
+    valueSet.getExpansion().setOffset(1);
+    assertIncompleteExpansion(valueSet);
+  }
+
+  @Test
+  void rejectsNestedExpansionEvenWhenTopLevelCountMatches() throws Exception {
+    ValueSet valueSet = VsValidateCodeTestDataHelper.createExpansionValueSet();
+    valueSet.getExpansion().getContainsFirstRep().addContains()
+        .setSystem(CODE_SYSTEM_URL).setCode("nested");
+    assertIncompleteExpansion(valueSet);
+  }
+
+  @Test
+  void rejectsUnclosedExpansionEvenWhenCountMatches() throws Exception {
+    ValueSet valueSet = VsValidateCodeTestDataHelper.createExpansionValueSet();
+    valueSet.getExpansion().addExtension(new Extension(
+        "http://hl7.org/fhir/StructureDefinition/valueset-unclosed", new BooleanType(true)));
+    assertIncompleteExpansion(valueSet);
+  }
+
+  @Test
+  void returnsFalseForAnEmptyButCompleteExpansion() throws Exception {
+    ValueSet valueSet = VsValidateCodeTestDataHelper.createExpansionValueSet();
+    valueSet.getExpansion().getContains().clear();
+    valueSet.getExpansion().setTotal(0);
+    var service = mockServiceForExpansion(valueSet);
+    var result = CombiningVsValidateCodeOperation.validateCode(service,
+        VsValidateCodeTestDataHelper.createVsValidateCodeParameterWithoutDisplay(), SCOPE);
+    assertThat(result.isResult()).isFalse();
+    verify(service, never()).validateCode(eq(SCOPE), any(CsValidateCodeParameter.class));
+  }
+
+  @Test
+  void rejectsMissingExpansion() throws Exception {
+    var service = mockServiceForExpansion(new ValueSet());
+    assertThatThrownBy(() -> CombiningVsValidateCodeOperation.validateCode(service,
+        VsValidateCodeTestDataHelper.createVsValidateCodeParameterWithoutDisplay(), SCOPE))
+        .isInstanceOf(UnsupportedTerminologyException.class)
+        .hasMessageContaining("expansion is missing");
+  }
+
+  private void assertIncompleteExpansion(ValueSet valueSet) throws Exception {
+    var service = mockServiceForExpansion(valueSet);
+    assertThatThrownBy(() -> CombiningVsValidateCodeOperation.validateCode(service,
+        VsValidateCodeTestDataHelper.createVsValidateCodeParameterWithoutDisplay(), SCOPE))
+        .isInstanceOf(UnsupportedTerminologyException.class)
+        .hasMessageContaining("incomplete ValueSet expansion");
+    verify(service, never()).validateCode(eq(SCOPE), any(CsValidateCodeParameter.class));
+  }
+
+  private CombiningTerminologyService mockServiceForExpansion(ValueSet valueSet) throws Exception {
+    CombiningTerminologyService service = mock(CombiningTerminologyService.class);
+    when(service.getCacheManager()).thenReturn(new TerminologyCacheManager());
+    when(service.getConfigProperties()).thenReturn(new ConfigProperties());
+    when(service.expandValueSet(eq(SCOPE), any())).thenReturn(valueSet);
+    when(service.getDefaultCodeSystemByScopeAndUrl(SCOPE, CODE_SYSTEM_URL))
+        .thenReturn(VsValidateCodeTestDataHelper.createCodeSystem());
+    return service;
   }
 
   /** Data helper for validate-code operation test fixtures. */
@@ -243,6 +376,8 @@ class CombiningVsValidateCodeOperationTest {
       contains.setSystem(CODE_SYSTEM_URL);
       contains.setCode(CODE);
       expansion.addContains(contains);
+      expansion.setTotal(1);
+      expansion.setOffset(0);
       valueSet.setExpansion(expansion);
       return valueSet;
     }

@@ -20,7 +20,7 @@
  */
 package de.gematik.zts.termzilla.terminologies.snomed.provider.cs.findmatches;
 
-import de.gematik.zts.termzilla.common.metadatasearch.lucene.querygenerators.PropertyFilter;
+import de.gematik.zts.termzilla.common.metadatasearch.helper.model.PropertyFilter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

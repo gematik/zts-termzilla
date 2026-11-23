@@ -97,19 +97,34 @@ class CombinedParameterQueryGeneratorTest {
     }
 
     @Test
-    @DisplayName("should ignore unknown param query types")
-    void shouldIgnoreUnknownParamQueryTypes() throws NotImplementedException {
+    @DisplayName("should reject unknown param query types")
+    void shouldRejectUnknownParamQueryTypes() {
       // GIVEN
       CombinedParameterQueryGenerator generator = new CombinedParameterQueryGenerator();
       ParamData mockedParamData = mock(ParamData.class);
       when(mockedParamData.getParamQueryType()).thenReturn("unknown_type");
+      when(mockedParamData.getParamName()).thenReturn("custom");
 
-      // WHEN
-      Query query = generator.prepareAndListQuery(List.of(mockedParamData));
+      // WHEN THEN
+      assertThatThrownBy(() -> generator.prepareAndListQuery(List.of(mockedParamData)))
+          .isInstanceOf(NotImplementedException.class)
+          .hasMessageContaining("unknown_type")
+          .hasMessageContaining("custom");
+    }
 
-      // THEN
-      assertThat(query).isInstanceOf(BooleanQuery.class);
-      assertThat(((BooleanQuery) query).clauses()).isEmpty();
+    @Test
+    @DisplayName("should reject missing param query type")
+    void shouldRejectMissingParamQueryType() {
+      // GIVEN
+      CombinedParameterQueryGenerator generator = new CombinedParameterQueryGenerator();
+      ParamData mockedParamData = mock(ParamData.class);
+      when(mockedParamData.getParamName()).thenReturn("name");
+
+      // WHEN THEN
+      assertThatThrownBy(() -> generator.prepareAndListQuery(List.of(mockedParamData)))
+          .isInstanceOf(NotImplementedException.class)
+          .hasMessageContaining("null")
+          .hasMessageContaining("name");
     }
 
     @Test

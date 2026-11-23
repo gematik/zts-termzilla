@@ -35,6 +35,8 @@ import org.hl7.fhir.r4.model.StringType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 /** Unit tests for {@link ConceptPropertyMatcher}. */
 @DisplayName("ConceptPropertyMatcher Tests")
@@ -130,6 +132,88 @@ class ConceptPropertyMatcherTest {
       // THEN
       assertThat(stringMatches && booleanMatches && codeMatches && decimalMatches && integerMatches)
           .isTrue();
+    }
+
+    @ParameterizedTest(name = "[{index}] {0} should match {1}")
+    @CsvSource({"1.5, 1.5", "1.50, 1.50", "-1.5, -1.5"})
+    @DisplayName("should match decimal edge cases")
+    void shouldMatchDecimalEdgeCases(String propertyValue, String expectedValue) {
+      // GIVEN
+      CodeSystem.ConceptPropertyComponent decimalProperty =
+          new CodeSystem.ConceptPropertyComponent()
+              .setCode("decimalProp")
+              .setValue(new DecimalType(propertyValue));
+
+      // WHEN
+      boolean result =
+          ConceptPropertyMatcher.hasMatchingPropertyValue(decimalProperty, expectedValue);
+
+      // THEN
+      assertThat(result)
+          .as("Decimal property <%s> should match filter value <%s>", propertyValue, expectedValue)
+          .isTrue();
+    }
+
+    @ParameterizedTest(name = "[{index}] {0} should not match {1}")
+    @CsvSource({"1.5, 1.50", "1.50, 1.5", "1.5, 1.51", "1.5, -1.5"})
+    @DisplayName("should not match decimal edge cases")
+    void shouldNotMatchDecimalEdgeCases(String propertyValue, String expectedValue) {
+      // GIVEN
+      CodeSystem.ConceptPropertyComponent decimalProperty =
+          new CodeSystem.ConceptPropertyComponent()
+              .setCode("decimalProp")
+              .setValue(new DecimalType(propertyValue));
+
+      // WHEN
+      boolean result =
+          ConceptPropertyMatcher.hasMatchingPropertyValue(decimalProperty, expectedValue);
+
+      // THEN
+      assertThat(result)
+          .as("Decimal property <%s> should not match filter value <%s>", propertyValue, expectedValue)
+          .isFalse();
+    }
+
+    @ParameterizedTest(name = "[{index}] {0} should match {1}")
+    @CsvSource({"42, 42", "-42, -42", "42, +42", "42, 042", "2147483647, 2147483647"})
+    @DisplayName("should match integer edge cases")
+    void shouldMatchIntegerEdgeCases(int propertyValue, String expectedValue) {
+      // GIVEN
+      CodeSystem.ConceptPropertyComponent integerProperty =
+          new CodeSystem.ConceptPropertyComponent()
+              .setCode("intProp")
+              .setValue(new IntegerType(propertyValue));
+
+      // WHEN
+      boolean result =
+          ConceptPropertyMatcher.hasMatchingPropertyValue(integerProperty, expectedValue);
+
+      // THEN
+      assertThat(result)
+          .as("Integer property <%s> should match filter value <%s>", propertyValue, expectedValue)
+          .isTrue();
+    }
+
+    @ParameterizedTest(name = "[{index}] {0} should not match {1}")
+    @CsvSource({"42, 43", "42, -42", "-2147483648, 2147483648"})
+    @DisplayName("should not match integer edge cases")
+    void shouldNotMatchIntegerEdgeCases(int propertyValue, String expectedValue) {
+      // GIVEN
+      CodeSystem.ConceptPropertyComponent integerProperty =
+          new CodeSystem.ConceptPropertyComponent()
+              .setCode("intProp")
+              .setValue(new IntegerType(propertyValue));
+
+      // WHEN
+      boolean result =
+          ConceptPropertyMatcher.hasMatchingPropertyValue(integerProperty, expectedValue);
+
+      // THEN
+      assertThat(result)
+          .as(
+              "Integer property <%s> should not match filter value <%s>",
+              propertyValue, expectedValue)
+          .isFalse();
     }
 
     @Test

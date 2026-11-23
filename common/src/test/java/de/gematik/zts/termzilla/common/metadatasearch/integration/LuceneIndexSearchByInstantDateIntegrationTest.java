@@ -83,11 +83,6 @@ import org.junit.jupiter.api.Test;
  *   <li>Date precision handling (year, month, day levels)
  *   <li>Multiple documents with different dates
  *   <li>Boundary date handling (first/last instant of periods)
- * </ul>
- *
- * <p><b>TODO - Additional Test Cases (to be implemented):</b>
- *
- * <ul>
  *   <li>Test multiple date parameters with OR combination (comma-separated values)
  *   <li>Test multiple date parameters with AND combination (multiple parameters)
  *   <li>Test timezone-aware date searches
@@ -120,6 +115,19 @@ class LuceneIndexSearchByInstantDateIntegrationTest {
     ResourceFieldGeneratorHelper.addInformationMissingFieldToDocument(doc, NAME_LASTUPDATED, false);
     ResourceFieldGeneratorHelper.addInstantDateParamFieldToDocument(
         doc, NAME_LASTUPDATED, new InstantType(instantString));
+    helper.indexDocument(doc);
+  }
+
+  /**
+   * Prepares and indexes a document where the instant date parameter is missing.
+   *
+   * @param helper the in-memory Lucene test helper
+   * @throws IOException if indexing fails
+   */
+  private void prepareDocumentWithMissingInstantDate(InMemoryLuceneTestHelper helper)
+      throws IOException {
+    Document doc = new Document();
+    ResourceFieldGeneratorHelper.addInformationMissingFieldToDocument(doc, NAME_LASTUPDATED, true);
     helper.indexDocument(doc);
   }
 
@@ -196,6 +204,77 @@ class LuceneIndexSearchByInstantDateIntegrationTest {
             .paramName(NAME_LASTUPDATED)
             .paramQueryType(ParamData.INSTANT_DATE_PARAM)
             .param(dateParam)
+            .build();
+
+    return new InstantParameterQueryGenerator().prepareQuery(paramData);
+  }
+
+  /**
+   * Creates a search query with OR logic for multiple exact date values.
+   *
+   * @param dates the date values to combine with OR
+   * @return the prepared Lucene query
+   * @throws NotImplementedException if the query generator encounters an unsupported feature
+   */
+  private Query createOrDateQuery(String... dates) throws NotImplementedException {
+    DateOrListParam orListParam = new DateOrListParam();
+    for (String date : dates) {
+      orListParam.addOr(new DateParam(date));
+    }
+
+    DateAndListParam dateAndListParam = new DateAndListParam().addAnd(orListParam);
+
+    ParamData paramData =
+        ParamData.builder()
+            .paramName(NAME_LASTUPDATED)
+            .paramQueryType(ParamData.INSTANT_DATE_PARAM)
+            .param(dateAndListParam)
+            .build();
+
+    return new InstantParameterQueryGenerator().prepareQuery(paramData);
+  }
+
+  /**
+   * Creates a search query with AND logic for multiple date parameters.
+   *
+   * @param params the date parameters to combine with AND
+   * @return the prepared Lucene query
+   * @throws NotImplementedException if the query generator encounters an unsupported feature
+   */
+  private Query createAndDateQuery(DateParam... params) throws NotImplementedException {
+    DateAndListParam dateAndListParam = new DateAndListParam();
+    for (DateParam param : params) {
+      dateAndListParam.addAnd(new DateOrListParam().addOr(param));
+    }
+
+    ParamData paramData =
+        ParamData.builder()
+            .paramName(NAME_LASTUPDATED)
+            .paramQueryType(ParamData.INSTANT_DATE_PARAM)
+            .param(dateAndListParam)
+            .build();
+
+    return new InstantParameterQueryGenerator().prepareQuery(paramData);
+  }
+
+  /**
+   * Creates a search query with the :missing modifier for date parameters.
+   *
+   * @param missing true to search for missing values, false for present values
+   * @return the prepared Lucene query
+   * @throws NotImplementedException if the query generator encounters an unsupported feature
+   */
+  private Query createMissingDateQuery(boolean missing) throws NotImplementedException {
+    DateParam dateParam = new DateParam();
+    dateParam.setMissing(missing);
+    DateAndListParam dateAndListParam =
+        new DateAndListParam().addAnd(new DateOrListParam().addOr(dateParam));
+
+    ParamData paramData =
+        ParamData.builder()
+            .paramName(NAME_LASTUPDATED)
+            .paramQueryType(ParamData.INSTANT_DATE_PARAM)
+            .param(dateAndListParam)
             .build();
 
     return new InstantParameterQueryGenerator().prepareQuery(paramData);
@@ -438,6 +517,102 @@ class LuceneIndexSearchByInstantDateIntegrationTest {
         assertEquals(2, results.size(), "Should find both Documents on 2023-06-15");
       }
     }
+
+    @Test
+    @DisplayName("Should find Document by exact millisecond precision search")
+    void shouldFindDocumentByExactMillisecondPrecision() throws IOException, NotImplementedException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: Two documents differing by 1 millisecond
+        prepareDocument(helper, "2023-06-15T10:30:45.123Z");
+        prepareDocument(helper, "2023-06-15T10:30:45.124Z");
+
+        // WHEN: Search for exact millisecond timestamp
+        Query query = createExactDateQuery("2023-06-15T10:30:45.123Z");
+        List<Document> results = helper.search(query);
+
+        // THEN: Should find only the exact millisecond match
+        assertEquals(1, results.size(), "Should find exactly one Document for millisecond value");
+      }
+    }
+  }
+
+  // ================================================================================
+  // Date Parameter Combination Tests
+  // ================================================================================
+
+  @Nested
+  @DisplayName("Date Parameter Combination Tests")
+  class DateParameterCombinationTests {
+
+    @Test
+    @DisplayName("Should find Documents with OR combination of multiple date values")
+    void shouldFindDocumentsWithOrCombination() throws IOException, NotImplementedException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: Three documents on different days
+        prepareDocument(helper, withZoneInfo("2023-06-15T10:00:00.000"));
+        prepareDocument(helper, withZoneInfo("2023-06-16T10:00:00.000"));
+        prepareDocument(helper, withZoneInfo("2023-06-17T10:00:00.000"));
+
+        // WHEN: Search using OR logic (equivalent to comma-separated values)
+        Query query = createOrDateQuery("2023-06-15", "2023-06-17");
+        List<Document> results = helper.search(query);
+
+        // THEN: Should find documents matching either date
+        assertEquals(2, results.size(), "Should find Documents for both OR dates");
+      }
+    }
+
+    @Test
+    @DisplayName("Should find Documents with AND combination of multiple date parameters")
+    void shouldFindDocumentsWithAndCombination() throws IOException, NotImplementedException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: Four documents across a date range
+        prepareDocument(helper, withZoneInfo("2023-06-14T10:00:00.000"));
+        prepareDocument(helper, withZoneInfo("2023-06-15T10:00:00.000"));
+        prepareDocument(helper, withZoneInfo("2023-06-16T10:00:00.000"));
+        prepareDocument(helper, withZoneInfo("2023-06-17T10:00:00.000"));
+
+        // WHEN: Search using AND logic via multiple date parameters
+        Query query =
+            createAndDateQuery(
+                new DateParam(ParamPrefixEnum.GREATERTHAN_OR_EQUALS, "2023-06-15"),
+                new DateParam(ParamPrefixEnum.LESSTHAN_OR_EQUALS, "2023-06-16"));
+        List<Document> results = helper.search(query);
+
+        // THEN: Should find documents satisfying both constraints
+        assertEquals(2, results.size(), "Should find Documents in the AND-constrained date range");
+      }
+    }
+  }
+
+  // ================================================================================
+  // Timezone-Aware Search Tests
+  // ================================================================================
+
+  @Nested
+  @DisplayName("Timezone-Aware Search Tests")
+  class TimezoneAwareSearchTests {
+
+    @Test
+    @DisplayName("Should match equivalent instants across different timezone offsets")
+    void shouldMatchEquivalentInstantsAcrossTimezones() throws IOException, NotImplementedException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: One document with +02:00 offset and one with a different instant
+        prepareDocument(helper, "2023-06-15T12:30:00.000+02:00");
+        prepareDocument(helper, "2023-06-15T12:31:00.000+02:00");
+
+        // WHEN: Search for the same instant in UTC
+        Query query = createExactDateQuery("2023-06-15T10:30:00.000Z");
+        List<Document> results = helper.search(query);
+
+        // THEN: Should find only the equivalent instant
+        assertEquals(1, results.size(), "Should match same instant independent of timezone offset");
+      }
+    }
   }
 
   // ================================================================================
@@ -482,6 +657,98 @@ class LuceneIndexSearchByInstantDateIntegrationTest {
 
         // THEN: Should find documents from 2022 and later
         assertEquals(2, results.size(), "Should find Documents from 2022 onwards");
+      }
+    }
+
+    @Test
+    @DisplayName("Should handle :missing=true modifier for date parameters")
+    void shouldHandleMissingTrueModifier() throws IOException, NotImplementedException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: One document with _lastUpdated and one with missing _lastUpdated
+        prepareDocument(helper, withZoneInfo("2023-06-15T10:00:00.000"));
+        prepareDocumentWithMissingInstantDate(helper);
+
+        // WHEN: Search for missing date values
+        Query query = createMissingDateQuery(true);
+        List<Document> results = helper.search(query);
+
+        // THEN: Should find only the document without date
+        assertEquals(1, results.size(), "Should find exactly one Document with missing date");
+      }
+    }
+
+    @Test
+    @DisplayName("Should handle :missing=false modifier for date parameters")
+    void shouldHandleMissingFalseModifier() throws IOException, NotImplementedException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: One document with _lastUpdated and one with missing _lastUpdated
+        prepareDocument(helper, withZoneInfo("2023-06-15T10:00:00.000"));
+        prepareDocumentWithMissingInstantDate(helper);
+
+        // WHEN: Search for present date values
+        Query query = createMissingDateQuery(false);
+        List<Document> results = helper.search(query);
+
+        // THEN: Should find only the document with date
+        assertEquals(1, results.size(), "Should find exactly one Document with present date");
+      }
+    }
+
+    @Test
+    @DisplayName("Should handle very old dates")
+    void shouldHandleVeryOldDates() throws IOException, NotImplementedException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: One old date and one modern date
+        prepareDocument(helper, "1900-01-01T00:00:00.000Z");
+        prepareDocument(helper, "2023-06-15T10:00:00.000Z");
+
+        // WHEN: Search for the old date
+        Query query = createExactDateQuery("1900-01-01");
+        List<Document> results = helper.search(query);
+
+        // THEN: Should find the old-date document
+        assertEquals(1, results.size(), "Should find Document with very old date");
+      }
+    }
+
+    @Test
+    @DisplayName("Should handle far future dates")
+    void shouldHandleFarFutureDates() throws IOException, NotImplementedException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: One current-ish date and one far future date
+        prepareDocument(helper, "2023-06-15T10:00:00.000Z");
+        prepareDocument(helper, "2099-12-31T23:59:59.999Z");
+
+        // WHEN: Search for future dates
+        Query query = createDateComparisonQuery(ParamPrefixEnum.GREATERTHAN_OR_EQUALS, "2099");
+        List<Document> results = helper.search(query);
+
+        // THEN: Should find future documents
+        assertEquals(1, results.size(), "Should find Document with far future date");
+      }
+    }
+
+    @Test
+    @DisplayName("Should handle epoch boundary without range overflow")
+    void shouldHandleEpochBoundaryWithoutRangeOverflow() throws IOException, NotImplementedException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: One date before and one date after unix epoch
+        prepareDocument(helper, "1969-12-31T23:59:59.999Z");
+        prepareDocument(helper, "1970-01-01T00:00:00.000Z");
+
+        // WHEN: Search for dates on or after exact epoch instant (timezone-stable)
+        Query query =
+            createDateComparisonQuery(
+                ParamPrefixEnum.GREATERTHAN_OR_EQUALS, "1970-01-01T00:00:00.000Z");
+        List<Document> results = helper.search(query);
+
+        // THEN: Should include only epoch and later documents
+        assertEquals(1, results.size(), "Should correctly handle epoch boundary comparisons");
       }
     }
   }

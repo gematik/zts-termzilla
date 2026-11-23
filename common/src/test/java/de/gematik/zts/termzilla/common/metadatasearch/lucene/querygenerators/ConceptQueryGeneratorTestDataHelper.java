@@ -20,6 +20,7 @@
  */
 package de.gematik.zts.termzilla.common.metadatasearch.lucene.querygenerators;
 
+import de.gematik.zts.termzilla.common.metadatasearch.helper.model.PropertyFilter;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.Coding;

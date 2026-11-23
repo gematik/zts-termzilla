@@ -18,19 +18,14 @@
  * For additional notes and disclaimer from gematik and in case of changes
  * by gematik, find details in the "Readme" file.
  */
-package de.gematik.zts.termzilla.server;
+package de.gematik.zts.termzilla.terminologies.fhirterms.config.loading;
 
-// TODO can we get rid of this?
-public class TerminologyServerConstants {
-
-  private TerminologyServerConstants() {
-    // private constructor to prevent instantiation
-  }
-
-  public static final boolean CONFIGURATION_DEFAULT_ACTIVE_ONLY = true;
-  public static final boolean CONFIGURATION_DEFAULT_INCLUDE_DESIGNATIONS = false;
-  public static final long CONFIGURATION_DEFAULT_OFFSET = 0;
-  public static final long CONFIGURATION_DEFAULT_PAGESIZE = 100;
-  public static final long CONFIGURATION_DEFAULT_PAGESIZE_MAX = 100;
-  public static final long CONFIGURATION_DEFAULT_MIN_FILTER_SIZE = 3;
+/**
+ * Configuration property for how the server should behave when loading FHIR resources, e.g.
+ * loading resources that do not conform to the quality standards.
+ * STRICT: Fail on any loading error
+ * LENIENT: Log errors and continue loading
+ */
+public enum LoadingMode {
+  LENIENT, STRICT
 }

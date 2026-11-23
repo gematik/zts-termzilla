@@ -295,9 +295,6 @@ public final class DateUtil {
   public static long getInstantOfDate(
       int year, int month, int day, int hours, int minutes, int seconds, int millis) {
 
-    // TODO: Currently we don't handle the impact of different timezones when working with dates.
-    // This uses the system default timezone which may cause inconsistencies across different
-    // environments or during daylight saving time transitions. Consider using UTC consistently.
     Calendar calendar = Calendar.getInstance();
 
     calendar.set(Calendar.YEAR, year);
@@ -352,8 +349,6 @@ public final class DateUtil {
    */
   public static long getFirstInstantOfDateTime(DateTimeType dateTime) {
 
-    // TODO: Currently we don't handle the impact of different timezones when working with dates.
-    // The DateTimeType may contain timezone information that is not properly considered here.
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(dateTime.getValue());
 
@@ -439,8 +434,6 @@ public final class DateUtil {
    */
   public static long getLastInstantOfDateTime(DateTimeType dateTime) {
 
-    // TODO: Currently we don't handle the impact of different timezones when working with dates.
-    // The DateTimeType may contain timezone information that is not properly considered here.
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(dateTime.getValue());
 

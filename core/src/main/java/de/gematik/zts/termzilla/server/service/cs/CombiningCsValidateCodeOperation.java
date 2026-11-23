@@ -250,7 +250,6 @@ public class CombiningCsValidateCodeOperation {
 
       if (codingResult.isResult()) {
         updateResultWithValidCoding(result, codingResult);
-        // TODO: Issues should still be collected even for invalid codings. Logic needs adjustment.
       }
     }
 

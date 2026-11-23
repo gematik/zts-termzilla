@@ -140,9 +140,6 @@ public class ConceptMapSearchHelper {
     addReferenceParam(cmSearchParameter.getSourceUri(), NAME_SOURCE_URI, searchParamList);
     // source-system (type uri) ConceptMap.group.source
     var sourceSystemOpt = cmSearchParameter.getSourceSystem();
-    // TODO we are converting to a reference param here ... is that okay?
-    // we could search for an uri otherwise, but therefore ore work needs to be done to support uri
-    // + version search
     sourceSystemOpt.ifPresent(
         uriParam ->
             addReferenceParam(
@@ -160,9 +157,6 @@ public class ConceptMapSearchHelper {
 
     // target-system (type uri) ConceptMap.group.target
     var targetSystemOpt = cmSearchParameter.getTargetSystem();
-    // TODO we are converting to a reference param here ... is that okay?
-    // we could search for an uri otherwise, but therefore ore work needs to be done to support uri
-    // + version search
     targetSystemOpt.ifPresent(
         uriParam ->
             addReferenceParam(
@@ -171,9 +165,6 @@ public class ConceptMapSearchHelper {
                         new ReferenceParam(uriParam.getValue()).setMissing(uriParam.getMissing())),
                 NAME_TARGET_SYSTEM,
                 searchParamList));
-
-    // TODO source-code?
-    // TODO target-code?
 
     return searchParamList;
   }

@@ -32,9 +32,6 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.builder.GraphTypeBuilder;
 import org.jgrapht.traverse.DepthFirstIterator;
 
-// TODO: Nochmal über case-sensitivity nachdenken
-// TODO: nochmal über den Einfluss von Supplements nachdenken
-
 /**
  * Graph-based representation of FHIR terminology hierarchies. Provides navigation through
  * parent-child relationships in a {@link CodeSystem}.

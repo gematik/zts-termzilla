@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
-import de.gematik.zts.termzilla.common.constants.CanonicalUrl;
+import de.gematik.zts.termzilla.common.constants.StandardTerminologyCanonicalUrls;
 import de.gematik.zts.termzilla.testing.BaseFhirIT;
 import de.gematik.zts.termzilla.testutils.packages.TestPackageHelper;
 import java.nio.file.Path;
@@ -109,7 +109,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParams(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_CONJUNCTIVITIS, null);
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_CONJUNCTIVITIS, null);
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -129,7 +129,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParams(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_CONJUNCTIVITIS, null);
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_CONJUNCTIVITIS, null);
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -149,7 +149,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParams(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_CONJUNCTIVITIS, null);
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_CONJUNCTIVITIS, null);
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -178,7 +178,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       // GIVEN
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
-          buildLookupParams(CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, null);
+          buildLookupParams(StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, null);
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -199,7 +199,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParams(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "inactive");
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "inactive");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -221,7 +221,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParams(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "sufficientlyDefined");
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "sufficientlyDefined");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -244,7 +244,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParams(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "moduleId");
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "moduleId");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -263,7 +263,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       // GIVEN
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
-          buildLookupParams(CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "url");
+          buildLookupParams(StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "url");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -271,7 +271,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       // THEN
       assertThat(findProperties(result, "url")).hasSize(1);
       assertThat(getPartStringValue(findProperties(result, "url").getFirst(), "value"))
-          .isEqualTo(CanonicalUrl.SNOMEDCT);
+          .isEqualTo(StandardTerminologyCanonicalUrls.SNOMEDCT);
     }
 
     @Test
@@ -281,7 +281,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParams(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "parent");
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "parent");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -310,7 +310,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       // GIVEN — explicitly request only 'url'; no other properties should appear
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
-          buildLookupParams(CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "url");
+          buildLookupParams(StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "url");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -331,7 +331,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       // GIVEN
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
-          buildLookupParams(CanonicalUrl.SNOMEDCT, SNOMED_VERSION, "9999999999", null);
+          buildLookupParams(StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, "9999999999", null);
 
       // WHEN / THEN
       assertThatThrownBy(() -> executeLookup(client, params))
@@ -355,7 +355,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParams(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "designation");
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "designation");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -375,7 +375,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParams(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "designation");
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "designation");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -402,7 +402,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParamsWithDisplayLanguage(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "de-DE");
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "de-DE");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -418,7 +418,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParamsWithDisplayLanguage(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "en-GB");
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "en-GB");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -434,7 +434,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParamsWithDisplayLanguage(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "en-US");
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "en-US");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -449,7 +449,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       // GIVEN
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
-          buildLookupParams(CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, null);
+          buildLookupParams(StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, null);
 
       // WHEN
       Parameters result = executeLookupWithAcceptLanguage(client, params, "de-DE");
@@ -465,7 +465,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       // GIVEN
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
-          buildLookupParams(CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, null);
+          buildLookupParams(StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, null);
 
       // WHEN
       Parameters result = executeLookupWithAcceptLanguage(client, params, "en-GB");
@@ -482,7 +482,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParamsWithDisplayLanguage(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "ja");
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "ja");
 
       // WHEN
       Parameters result = executeLookup(client, params);
@@ -503,7 +503,7 @@ public class CodeSystemLookupConceptSnomedIT extends BaseFhirIT {
       IGenericClient client = getFhirClient(SCOPE);
       Parameters params =
           buildLookupParams(
-              CanonicalUrl.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "lang.de-DE");
+              StandardTerminologyCanonicalUrls.SNOMEDCT, SNOMED_VERSION, SNOMED_CONCEPT_DYSPNOE, "lang.de-DE");
 
       // WHEN
       Parameters result = executeLookup(client, params);
