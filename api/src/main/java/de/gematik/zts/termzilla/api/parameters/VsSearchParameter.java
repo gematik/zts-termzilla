@@ -42,8 +42,8 @@ public class VsSearchParameter extends TerminologyResourceSearchParameter implem
 
   @Override
   public void setUrlParam(UriParam urlParam) {
-    this.urlParam = urlParam;
-    extractVersionFromParam(urlParam);
+    this.urlParam = copyUriParam(urlParam);
+    extractVersionFromParam(this.urlParam);
   }
 
   public Optional<TokenParam> getCode() {

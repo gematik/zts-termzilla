@@ -36,6 +36,7 @@ import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
+import de.gematik.zts.termzilla.api.exceptions.InvalidSearchParameterException;
 import de.gematik.zts.termzilla.api.exceptions.NotImplementedException;
 import de.gematik.zts.termzilla.api.exceptions.UnknownScopeException;
 import de.gematik.zts.termzilla.api.parameters.CmSearchParameter;
@@ -181,6 +182,8 @@ public class ConceptMapResourceProvider implements IResourceProvider {
           id -> terminologyService.getConceptMap(scope, id, properties.getResourceRetrievalMode()),
           offsetParam != null ? offsetParam.getValue().intValue() : null,
           countParam != null ? countParam.getValue().intValue() : null);
+    } catch (InvalidSearchParameterException e) {
+      throw new InvalidRequestException(e.getMessage());
     } catch (NotImplementedException | UnknownScopeException e) {
       throw new InvalidRequestException(e);
     }

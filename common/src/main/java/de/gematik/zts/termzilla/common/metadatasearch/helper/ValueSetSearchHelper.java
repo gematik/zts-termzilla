@@ -145,9 +145,6 @@ public class ValueSetSearchHelper {
     var uriParamOpt = vsSearchParameter.getReference();
 
     // if the reference parameter is present, prepare it
-    // TODO we are converting to a reference param here ... is that okay?
-    // we could search for an uri otherwise, but therefore ore work needs to be done to support uri
-    // + version search
     uriParamOpt.ifPresent(
         uriParam ->
             addReferenceParam(

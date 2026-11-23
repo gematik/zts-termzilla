@@ -46,7 +46,6 @@ public class CodeSystemHelper {
     // Private constructor to prevent instantiation
   }
 
-  // TODO: nochmal wegen ACTIVE überlegen
   /**
    * Implicit concept properties defined by the FHIR specification that must be supported even when
    * not explicitly declared in a {@link CodeSystem}. Used by {@link #getProperty(CodeSystem,
@@ -236,7 +235,6 @@ public class CodeSystemHelper {
     return unmodifiable;
   }
 
-  // TODO what if a concept is deprecated / retired --> are sub-concepts automatically retired?
   public static boolean isConceptActive(CodeSystem.ConceptDefinitionComponent concept) {
 
     // determine if concept status is active

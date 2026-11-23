@@ -44,6 +44,7 @@ import static de.gematik.zts.termzilla.common.metadatasearch.lucene.fields.Conce
 import static de.gematik.zts.termzilla.common.metadatasearch.lucene.fields.ConceptComponentFieldNames.SUFFIX_TOKEN_EXACT;
 import static de.gematik.zts.termzilla.common.metadatasearch.lucene.fields.ConceptComponentFieldNames.SUFFIX_TOKEN_LOWERCASE_EXACT;
 
+import static ca.uhn.fhir.rest.api.Constants.PARAM_CONTENT;
 import de.gematik.zts.termzilla.common.metadatasearch.lucene.fields.ConceptComponentFieldNames;
 import de.gematik.zts.termzilla.common.metadatasearch.lucene.querygenerators.date.utils.DateUtil;
 import java.math.BigDecimal;
@@ -104,7 +105,6 @@ public class ConceptComponentFieldGeneratorHelper {
     // Private constructor - utility class should not be instantiated
   }
 
-  // TODO: ggf. für die Speicherung der Serialisierung aufbewahren
 
   /**
    * Stores a serialized resource as a binary stored field in the document.
@@ -113,7 +113,7 @@ public class ConceptComponentFieldGeneratorHelper {
    * @param resource the serialized resource bytes
    */
   public static void addStoredFieldToDocument(Document document, byte[] resource) {
-    document.add(new StoredField("_content", resource));
+    document.add(new StoredField(PARAM_CONTENT, resource));
   }
 
   /**
@@ -503,7 +503,6 @@ public class ConceptComponentFieldGeneratorHelper {
     String fieldName =
         NAME_PREFIX_PROPERTY + SEPARATOR + propertyName + SEPARATOR + SUFFIX_LONG_POINT;
     document.add(new LongPoint(fieldName, propertyValue));
-    // TODO should we always store this? Then we should remove the parameter
     if (fieldStore == Field.Store.YES) {
       document.add(new StoredField(fieldName, propertyValue));
     }
@@ -574,13 +573,11 @@ public class ConceptComponentFieldGeneratorHelper {
     long endInstant = DateUtil.getLastInstantOfDateTime(propertyValue);
 
     document.add(new LongPoint(fieldPrefix + SUFFIX_DATE_START, startInstant));
-    // TODO should we always store this? Then we should remove the parameter
     if (fieldStore == Field.Store.YES) {
       document.add(new StoredField(fieldPrefix + SUFFIX_DATE_START, startInstant));
     }
 
     document.add(new LongPoint(fieldPrefix + SUFFIX_DATE_END, endInstant));
-    // TODO should we always store this? Then we should remove the parameter
     if (fieldStore == Field.Store.YES) {
       document.add(new StoredField(fieldPrefix + SUFFIX_DATE_END, endInstant));
     }
@@ -676,8 +673,6 @@ public class ConceptComponentFieldGeneratorHelper {
   public static void addCodingTokenParamFieldToDocument(
       Document document, String paramName, String system, String code, Field.Store fieldStore) {
 
-    // TODO we will go for case insensitive search, therefore everything will be converted to
-    // lowercase
     String fieldName = paramName + SEPARATOR + SUFFIX_TOKEN_LOWERCASE_EXACT;
 
     String fieldValue = "";

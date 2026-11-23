@@ -5,7 +5,7 @@
   <parent>
     <groupId>de.gematik.zts</groupId>
     <artifactId>termzilla</artifactId>
-    <version>1.1.0-b76</version>
+    <version>1.1.1-b93</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>termzilla-common</artifactId>

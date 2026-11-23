@@ -42,6 +42,7 @@ import de.gematik.zts.termzilla.api.parameters.VsExpandParameter;
 import de.gematik.zts.termzilla.api.service.TerminologyManager;
 import de.gematik.zts.termzilla.common.helper.ExpansionHelper;
 import de.gematik.zts.termzilla.common.helper.LanguageRegistry;
+import de.gematik.zts.termzilla.configuration.ConfigProperties;
 import de.gematik.zts.termzilla.generic.MapUtils;
 import de.gematik.zts.termzilla.server.cache.ExpansionCacheKey;
 import de.gematik.zts.termzilla.server.service.CombiningTerminologyService;
@@ -96,10 +97,6 @@ import org.hl7.fhir.utilities.CanonicalPair;
 @Slf4j
 public class CombiningVsProvidedExpandOperation {
 
-  // TODO: Move these constants into a centralized configuration.
-  public static final int DEFAULT_COUNT_PARAM_VALUE = 100;
-  public static final int MAX_COUNT_PARAM_VALUE = 1000000;
-
   /** Carries shared parameters used while resolving includes/excludes in compose expansion. */
   private record ExpansionResolutionContext(
       String scope,
@@ -152,7 +149,6 @@ public class CombiningVsProvidedExpandOperation {
   private record ExpansionElementContext(
       VsExpandParameter vsExpandParameter,
       MultiValuedMap<Integer, ValueSet.ConceptReferenceComponent> explicitConceptReferenceMap,
-      long activeConceptCount,
       String scope,
       LanguageSelectionParameter languageSelectionParameter) {}
 
@@ -227,7 +223,6 @@ public class CombiningVsProvidedExpandOperation {
     // managers can apply their designations, and are recorded in the expansion parameters.
     resolveSupplements(combiningTerminologyService, resultVs, vsExpandParameter, scope);
 
-
     // -----------------------------------------
     // Handling of the 'system-version' parameter
     // "Specifies a version to use for a system, if the value set does not specify which one to use.
@@ -266,7 +261,6 @@ public class CombiningVsProvidedExpandOperation {
         vsExpandParameter.getFilterParam() != null
             ? vsExpandParameter.getFilterParam().getValue()
             : null;
-    // TODO: Implement caching?
 
     // -----------------------------------------
     // The actual expansion starts here.
@@ -284,11 +278,6 @@ public class CombiningVsProvidedExpandOperation {
                 valueSetIdentity(resultVs),
                 vsExpandParameter.getResourceOrigin()));
 
-
-    // Number of active concepts in the result set. This is needed later to return the number of
-    // concepts in the request result (paging support).
-    long activeConceptCount = countActiveConcepts(finalExpandResult.getConceptBaseInfos());
-
     // Transfer and enrich the results from the resolved includes in the expansion.
     createExpansionElement(
         combiningTerminologyService,
@@ -297,7 +286,6 @@ public class CombiningVsProvidedExpandOperation {
         new ExpansionElementContext(
             vsExpandParameter,
             finalExpandResult.getExplicitConceptReferences(),
-            activeConceptCount,
             scope,
             languageSelectionParameter));
 
@@ -439,7 +427,6 @@ public class CombiningVsProvidedExpandOperation {
    * @throws UnknownScopeException if the specified scope is not recognized
    * @throws UnknownConceptException if a referenced concept cannot be found
    */
-  // TODO: Prevent self-references, which would otherwise cause an infinite loop.
   private static VsExpandPartResult processValueSetCompose(
       CombiningTerminologyService combiningTerminologyService,
       ValueSet.ValueSetComposeComponent compose,
@@ -655,11 +642,6 @@ public class CombiningVsProvidedExpandOperation {
       // Check that the canonical reference is well-formed.
       String canonicalValue = canonical.getValue();
 
-      // TODO : we check here for a fully defined canonical (with system and veriosn), but in
-      // resolveIncludedValueSet there is a branch that also allows for a canonical with just a
-      // system.
-      //  We should think about if we want to allow this or if we want to enforce the presence of
-      // both system and version in the canonical.
       CanonicalPair canonicalPair = parseAndValidateCanonical(canonicalValue);
 
       // detect cyclic ValueSet dependencies before recursing. The node identity is the
@@ -1165,7 +1147,8 @@ public class CombiningVsProvidedExpandOperation {
       ExpansionElementContext context)
       throws NotImplementedException, UnsupportedTerminologyException, UnknownScopeException {
 
-    long count = resolveCount(context.vsExpandParameter);
+    long count =
+        resolveCount(context.vsExpandParameter, combiningTerminologyService.getConfigProperties());
     long offset = resolveOffset(context.vsExpandParameter);
     String displayLanguage = resolveDisplayLanguage(resultVs, context.vsExpandParameter);
     boolean includeInactiveConcepts = resolveIncludeInactiveConcepts(context.vsExpandParameter);
@@ -1176,9 +1159,10 @@ public class CombiningVsProvidedExpandOperation {
     // Apply the 'exclude-system' parameter: remove all concepts belonging to an excluded
     // CodeSystem (optionally restricted to a specific version) before paging.
     applyExcludeSystem(finalResultSet, context.vsExpandParameter);
+    long activeConceptCount = countActiveConcepts(finalResultSet);
 
     validateOffsetInRange(
-        offset, includeInactiveConcepts, finalResultSet, context.activeConceptCount);
+        offset, includeInactiveConcepts, finalResultSet, activeConceptCount);
 
     List<ConceptBaseInfo> returnList =
         buildReturnList(finalResultSet, includeInactiveConcepts, offset, count);
@@ -1188,7 +1172,7 @@ public class CombiningVsProvidedExpandOperation {
         resultExpansion,
         includeInactiveConcepts,
         finalResultSet,
-        context.activeConceptCount,
+        activeConceptCount,
         offset);
 
     addExpansionContainsElements(
@@ -1208,18 +1192,18 @@ public class CombiningVsProvidedExpandOperation {
   /**
    * Resolves the effective {@code count} paging parameter.
    *
-   * <p>Uses {@link #DEFAULT_COUNT_PARAM_VALUE} when no value is provided and caps to {@link
-   * #MAX_COUNT_PARAM_VALUE}.
+   * <p>Uses the configured default when no value is provided and caps explicit requests at the
+   * configured maximum. An explicit zero is a request for the total only (FHIR R4).
    */
-  private static long resolveCount(VsExpandParameter vsExpandParameter) {
-    long count = DEFAULT_COUNT_PARAM_VALUE;
-    if (vsExpandParameter.getCountParam() != null && !vsExpandParameter.getCountParam().isEmpty()) {
+  static long resolveCount(VsExpandParameter vsExpandParameter, ConfigProperties config) {
+    long count = config.getExpansionDefaultCount();
+    if (vsExpandParameter.getCountParam() != null && vsExpandParameter.getCountParam().hasValue()) {
       count = vsExpandParameter.getCountParam().getValue();
-      if (count > MAX_COUNT_PARAM_VALUE) {
-        count = MAX_COUNT_PARAM_VALUE;
-      }
     }
-    return count;
+    if (count < 0) {
+      throw new InvalidRequestException("The 'count' parameter must not be negative.");
+    }
+    return Math.min(count, config.getExpansionMaximumCount());
   }
 
   /**

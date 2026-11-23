@@ -83,6 +83,18 @@ public class ConfigProperties {
   @Value("${core.systemLanguage:de-DE}")
   private String systemLanguage;
 
+  /** Default scope passed to terminology providers during initialization. */
+  @Value("${core.defaultScope:fhir}")
+  private String defaultScope = "fhir";
+
+  /** Default number of concepts in a ValueSet expansion page. */
+  @Value("${core.expansion.defaultCount:100}")
+  private int expansionDefaultCount = 100;
+
+  /** Maximum number of concepts in a ValueSet expansion page. */
+  @Value("${core.expansion.maximumCount:1000000}")
+  private int expansionMaximumCount = 1_000_000;
+
   /**
    * Determines the mode resources can be retrieved in searches. When set to {@code FULL}, all
    * resource content is available for retrieval and included in search results. When set to {@code
@@ -365,11 +377,25 @@ public class ConfigProperties {
     validateVersion();
     validateBaseWorkingDir();
     validateSystemLanguage();
+    validateDefaultScopeAndExpansionConfiguration();
     validateSecurityConfiguration();
     validateCachingConfiguration();
     validatePagingConfiguration();
     validateSystemLevelOperationsConfiguration();
     validateCapabilitiesConfiguration();
+  }
+
+  private void validateDefaultScopeAndExpansionConfiguration()
+      throws InvalidConfigurationException {
+    if (defaultScope == null || defaultScope.isBlank()) {
+      throw new InvalidConfigurationException("Default scope must not be blank.");
+    }
+    if (expansionDefaultCount < 0 || expansionMaximumCount <= 0
+        || expansionDefaultCount > expansionMaximumCount) {
+      throw new InvalidConfigurationException(
+          "Expansion counts invalid: default count must not be negative, "
+              + "maximum count must be positive, and default count must not exceed maximum count.");
+    }
   }
 
   /**

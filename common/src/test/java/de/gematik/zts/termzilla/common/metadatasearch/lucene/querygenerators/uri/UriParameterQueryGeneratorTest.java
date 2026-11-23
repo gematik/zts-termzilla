@@ -61,7 +61,6 @@ import org.junit.jupiter.params.provider.MethodSource;
  * </ul>
  */
 @DisplayName("UriParameterQueryGenerator Tests")
-// TODO: URI/URL normalization tests sind noch nicht vollständig und funktionsfähig
 
 class UriParameterQueryGeneratorTest {
 
@@ -467,6 +466,59 @@ class UriParameterQueryGeneratorTest {
             termQuery.getTerm().text().startsWith(expectedPrefixOrExact),
             "Should preserve URI scheme prefix");
       }
+    }
+  }
+
+  // ================================================================================
+  // URI Normalization Tests
+  // ================================================================================
+
+  @Nested
+  @DisplayName("URI Normalization")
+  class UriNormalizationTests {
+
+    private static Stream<Arguments> standardNormalizationCases() {
+      return Stream.of(
+          Arguments.of(
+              "HTTP://EXAMPLE.ORG:80/a/../b?z=2&a=1#fragment",
+              "http://example.org/b?a=1&z=2"),
+          Arguments.of("https://Example.org:443/Case/", "https://example.org/Case/"),
+          Arguments.of(
+              "https://example.org:8443/Path?B=2&a=1",
+              "https://example.org:8443/Path?B=2&a=1"),
+          Arguments.of(
+              "urn:oid:2.16.840.1.113883.6.96",
+              "urn:oid:2.16.840.1.113883.6.96"));
+    }
+
+    @ParameterizedTest(name = "normalize {0} to {1}")
+    @MethodSource("standardNormalizationCases")
+    void shouldNormalizeStandardUri(String input, String expected) {
+      Query query =
+          UriParameterQueryGenerator.prepareStandardQuery("url", new UriParam(input));
+
+      assertEquals(expected, ((TermQuery) query).getTerm().text());
+    }
+
+    private static Stream<Arguments> belowNormalizationCases() {
+      return Stream.of(
+          Arguments.of("HTTP://EXAMPLE.ORG:80/a/../b", "http://example.org/b"),
+          Arguments.of("HTTPS://Example.org:443/Case/", "https://example.org/Case/"),
+          Arguments.of("https://example.org:8443/Path", "https://example.org:8443/Path"));
+    }
+
+    @ParameterizedTest(name = "normalize :below {0} to {1}")
+    @MethodSource("belowNormalizationCases")
+    void shouldNormalizeBelowUri(String input, String expected) throws NotImplementedException {
+      UriParam param = new UriParam(input);
+      param.setQualifier(UriParamQualifierEnum.BELOW);
+
+      Query query = UriParameterQueryGenerator.prepareQuery("url", param);
+
+      assertEquals(
+          "url" + SEPARATOR + SUFFIX_URL_PATH_BELOW_EXACT,
+          ((TermQuery) query).getTerm().field());
+      assertEquals(expected, ((TermQuery) query).getTerm().text());
     }
   }
 

@@ -278,8 +278,6 @@ public class SnomedCodeSystemService implements CodeSystemSvcInterface {
       String scope, CsSearchParameter csSearchParameter, boolean isCapabilitySearch)
       throws NotImplementedException {
     // return an empty list if provision mode is SUPPORTED
-    // TODO this needs to be refined, when we want to make it more fine grained than setting the
-    // provision mode per version
     if (!isCapabilitySearch && this.provisionMode == ProvisionMode.SUPPORTED) {
       return List.of();
     }
@@ -291,11 +289,9 @@ public class SnomedCodeSystemService implements CodeSystemSvcInterface {
    *
    * @throws NotImplementedException always — search by code is not yet supported for SNOMED CT
    */
-  // TODO: OPtional gerade ziehen
   @Override
   public List<IdType> searchCodeSystemsByCode(
       String scope, TokenParam codeParam, List<IdType> preFilter) throws NotImplementedException {
-    // TODO: Implementierung für Snomed
     throw new NotImplementedException("searchCodeSystem is not yet implemented.");
   }
 
@@ -308,7 +304,6 @@ public class SnomedCodeSystemService implements CodeSystemSvcInterface {
   public List<IdType> searchCodeSystemsByContent(
       String scope, StringParam contentParam, List<IdType> preFilter)
       throws NotImplementedException {
-    // TODO: Implementierung für Snomed
     throw new NotImplementedException("searchCodeSystem is not yet implemented.");
   }
 

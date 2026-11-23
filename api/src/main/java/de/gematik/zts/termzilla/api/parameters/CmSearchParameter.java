@@ -23,6 +23,7 @@ package de.gematik.zts.termzilla.api.parameters;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
+import de.gematik.zts.termzilla.api.exceptions.InvalidSearchParameterException;
 import java.io.Serializable;
 import java.util.Optional;
 import lombok.Setter;
@@ -65,8 +66,21 @@ public class CmSearchParameter extends TerminologyResourceSearchParameter implem
 
   @Override
   public void setUrlParam(UriParam urlParam) {
-    this.urlParam = urlParam;
-    extractVersionFromParam(urlParam);
+    this.urlParam = copyUriParam(urlParam);
+    extractVersionFromParam(this.urlParam);
+  }
+
+  @Override
+  public void validate() {
+    super.validate();
+    if (getSourceCanonical().isPresent() && getSourceUri().isPresent()) {
+      throw new InvalidSearchParameterException(
+          "Either use '" + SP_SOURCE_CANONICAL + "' or '" + SP_SOURCE_URI + "' parameter, but not both.");
+    }
+    if (getTargetCanonical().isPresent() && getTargetUri().isPresent()) {
+      throw new InvalidSearchParameterException(
+          "Either use '" + SP_TARGET_CANONICAL + "' or '" + SP_TARGET_URI + "' parameter, but not both.");
+    }
   }
 
   public Optional<ReferenceParam> getSourceCanonical() {

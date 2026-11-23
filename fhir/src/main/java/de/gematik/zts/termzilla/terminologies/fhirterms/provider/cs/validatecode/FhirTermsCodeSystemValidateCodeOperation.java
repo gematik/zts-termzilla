@@ -45,8 +45,6 @@ import org.hl7.fhir.r4.model.CodeSystem.ConceptDefinitionComponent;
 import org.hl7.fhir.r4.model.CodeType;
 import org.jspecify.annotations.NonNull;
 
-// TODO handle abstract parameter
-
 /**
  * Implements the {@code CodeSystem/$validate-code} operation for FHIR package terminologies.
  *

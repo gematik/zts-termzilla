@@ -273,10 +273,6 @@ class InMemoryFilterProcessor {
       return;
     }
 
-    // TODO: Sonderbehandlung von 'display'-Filtern
-
-    // TODO: Sonderbehandlung von 'definition'-Filtern
-
     // Property-Typ-Kompatibilität wurde bereits in ExpandFilterValidator.validateRegexFilter()
     // geprüft
 
@@ -375,8 +371,6 @@ class InMemoryFilterProcessor {
                 }
               });
 
-      // TODO: Sonderbehandlung  für implizite Properties (code, display, definition, inactive, ...)
-
     }
   }
 
@@ -403,7 +397,6 @@ class InMemoryFilterProcessor {
 
     // Hierarchie-Voraussetzungen wurden bereits in ExpandFilterValidator.validateFilters() geprüft
 
-    // TODO: implement as soon as needed
     failBecauseOfUnsupportedFilter(
         filter, resultFilter, includeInactiveConcepts, filterResultSet, codeSystem);
   }
@@ -430,7 +423,6 @@ class InMemoryFilterProcessor {
 
     // Hierarchie-Voraussetzungen wurden bereits in ExpandFilterValidator.validateFilters() geprüft
 
-    // TODO: implement as soon as needed
     failBecauseOfUnsupportedFilter(
         filter, resultFilter, includeInactiveConcepts, filterResultSet, codeSystem);
   }
@@ -458,7 +450,6 @@ class InMemoryFilterProcessor {
 
     // Hierarchie-Voraussetzungen wurden bereits in ExpandFilterValidator.validateFilters() geprüft
 
-    // TODO: implement as soon as needed
     failBecauseOfUnsupportedFilter(
         filter, resultFilter, includeInactiveConcepts, filterResultSet, codeSystem);
   }
@@ -486,7 +477,6 @@ class InMemoryFilterProcessor {
 
     // Hierarchie-Voraussetzungen wurden bereits in ExpandFilterValidator.validateFilters() geprüft
 
-    // TODO: implement as soon as needed
     failBecauseOfUnsupportedFilter(
         filter, resultFilter, includeInactiveConcepts, filterResultSet, codeSystem);
   }
@@ -511,7 +501,6 @@ class InMemoryFilterProcessor {
       Set<ConceptBaseInfo> filterResultSet,
       CodeSystem codeSystem) {
 
-    // TODO: implement as soon as needed
     failBecauseOfUnsupportedFilter(
         filter, resultFilter, includeInactiveConcepts, filterResultSet, codeSystem);
   }

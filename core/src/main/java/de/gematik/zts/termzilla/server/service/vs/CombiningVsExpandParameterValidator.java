@@ -62,8 +62,45 @@ public class CombiningVsExpandParameterValidator extends CommonParameterValidato
     failOnInvalidSystemVersionParameterCombinations(parameters);
     failOnUnsupportedValueSetContent(parameters);
     failOnConceptAndFilterInSameComposePart(parameters);
+    failOnNegativeCountParam(parameters);
+    failOnNegativeOffsetParam(parameters);
     failOnCountZeroAndOffsetSet(parameters);
     validateDateNotInFuture(parameters);
+  }
+
+  /**
+   * Ensures that the offset parameter is not negative.
+   *
+   * <p>The validation is skipped if the offset parameter is not provided
+   * or does not contain a value. An offset of zero is allowed.
+   *
+   * @param parameters the operation parameters to validate
+   * @throws InvalidRequestException if the offset parameter is negative
+   */
+  private static void failOnNegativeOffsetParam(VsExpandParameter parameters) {
+    if (parameters.getOffsetParam() != null
+        && parameters.getOffsetParam().hasValue()
+        && parameters.getOffsetParam().getValue() < 0) {
+      throw new InvalidRequestException("The 'offset' parameter must not be negative.");
+    }
+  }
+
+  /**
+   * Ensures that the count parameter is not negative.
+   *
+   * <p>The validation is skipped if the count parameter is not provided
+   * or does not contain a value. A count of zero is allowed to request
+   * the total number of concepts without returning the concepts themselves.
+   *
+   * @param parameters the operation parameters to validate
+   * @throws InvalidRequestException if the count parameter is negative
+   */
+  private static void failOnNegativeCountParam(VsExpandParameter parameters) {
+    if (parameters.getCountParam() != null
+        && parameters.getCountParam().hasValue()
+        && parameters.getCountParam().getValue() < 0) {
+      throw new InvalidRequestException("The 'count' parameter must not be negative.");
+    }
   }
 
   /**

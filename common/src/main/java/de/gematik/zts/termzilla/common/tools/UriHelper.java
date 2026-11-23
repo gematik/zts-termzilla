@@ -33,7 +33,6 @@ public class UriHelper {
     throw new AssertionError("UriHelper is a utility class and should not be instantiated");
   }
 
-  // TODO: NEeds major reworking, this is a mess
   public static String normalizeUrl(String url) throws URISyntaxException {
     URI uri = new URI(url).normalize(); // Normalisiert den Pfad, entfernt `.` und `..`
 
@@ -58,14 +57,6 @@ public class UriHelper {
         port = -1; // Standardport ignorieren
       }
 
-      // Normalisierten Pfad erhalten (falls leer, setze auf "/")
-      // TODO: Hier haben wir nen ekeliges Problem, wenn der Pfad leer ist, dann wird er auf "/"
-      // gesetzt. Das sorgt
-      //  dafür, dass die URL nicht mehr mit der Original-URL übereinstimmt, wenn der Pfad leer ist.
-      // Das passiert
-      //  häufiger als man denkt: z.B. EDQM
-      //  wurde erstmal auskommentiert, ich kann mir aber vorstellen, dass wir das irgendwann mal
-      // mit absicht reingemacht haben
       String path = uri.getPath();
 
       // Sortiere die Query-Parameter alphabetisch

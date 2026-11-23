@@ -110,9 +110,6 @@ public class ConceptComponentFieldGenerator {
       return;
     }
 
-    // Code hinzufügen
-    // TODO: Wir müssen unbedingt noch darüber diskutieren, was das erwartete Suchverhalten
-    //  bei "caseSensitive=true|false" ist
 
     // Indizieren des codes als exakte Zeichenfolge
     ConceptComponentFieldGeneratorHelper.addCodeFieldToDocument(

@@ -48,6 +48,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreDoc;
@@ -194,8 +195,14 @@ class VsExpandLuceneHelper {
       case CODE -> new TermQuery(new Term(fieldPrefix + SUFFIX_TOKEN_EXACT, value));
       case BOOLEAN -> new TermQuery(new Term(fieldPrefix + SUFFIX_TOKEN_EXACT, value));
       case INTEGER -> {
-        long longValue = Long.parseLong(value);
-        yield LongPoint.newExactQuery(fieldPrefix + SUFFIX_LONG_POINT, longValue);
+        // if 'value' cannot be parsed, it will trigger a NumberFormatException and http 500
+        // instead we want to return an empty expansion (no matches) for invalid integer values
+        try {
+          yield LongPoint.newExactQuery(fieldPrefix + SUFFIX_LONG_POINT, Long.parseLong(value));
+        } catch (NumberFormatException _) {
+          log.debug("Failed to parse integer filter value '{}' for property '{}'", value, propertyCode);
+          yield new MatchNoDocsQuery("Invalid integer value for property " + propertyCode);
+        }
       }
       case DECIMAL -> new TermQuery(new Term(fieldPrefix + SUFFIX_STRING_EXACT, value));
       case DATETIME -> buildDateTimeOverlapQuery(fieldPrefix, value);

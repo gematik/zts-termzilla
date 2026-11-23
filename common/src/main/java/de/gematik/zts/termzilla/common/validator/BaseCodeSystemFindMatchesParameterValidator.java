@@ -209,6 +209,5 @@ public class BaseCodeSystemFindMatchesParameterValidator {
    * @throws InvalidRequestException if sub-properties are found
    */
   protected void validateNoSubProperty(Parameters.ParametersParameterComponent propertyParam) {
-    // TODO: Implement this method
   }
 }

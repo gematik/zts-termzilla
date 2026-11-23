@@ -23,6 +23,7 @@ package de.gematik.zts.termzilla.api.parameters;
 import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
+import de.gematik.zts.termzilla.api.exceptions.InvalidSearchParameterException;
 import java.io.Serializable;
 import java.util.Optional;
 import lombok.Setter;
@@ -48,13 +49,13 @@ public class CsSearchParameter extends TerminologyResourceSearchParameter implem
   // Override setters to extract version from system and url params
   @Override
   public void setUrlParam(UriParam urlParam) {
-    this.urlParam = urlParam;
-    extractVersionFromParam(urlParam);
+    this.urlParam = copyUriParam(urlParam);
+    extractVersionFromParam(this.urlParam);
   }
 
   public void setSystemParam(UriParam systemParam) {
-    this.systemParam = systemParam;
-    extractVersionFromParam(systemParam);
+    this.systemParam = copyUriParam(systemParam);
+    extractVersionFromParam(this.systemParam);
   }
 
   public Optional<UriParam> getSystem() {
@@ -103,8 +104,19 @@ public class CsSearchParameter extends TerminologyResourceSearchParameter implem
   }
 
   @Override
+  public void validate() {
+    super.validate();
+    if (getSystem().isPresent() && getUrl().isPresent()) {
+      throw new InvalidSearchParameterException(
+          "Either use '" + CodeSystem.SP_URL + "' or '" + CodeSystem.SP_SYSTEM + "' Parameter.");
+    }
+    validateNoDuplicateVersion(systemParam, SP_SYSTEM);
+  }
+
+  @Override
   protected void postBuildNormalize() {
     super.postBuildNormalize();
+    systemParam = copyUriParam(systemParam);
     extractVersionFromParam(systemParam);
   }
 }

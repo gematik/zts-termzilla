@@ -26,6 +26,7 @@ import static de.gematik.zts.termzilla.common.metadatasearch.lucene.fields.Resou
 import static de.gematik.zts.termzilla.common.metadatasearch.lucene.fields.ResourceFieldNames.NAME_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
@@ -34,7 +35,9 @@ import de.gematik.zts.termzilla.common.metadatasearch.helper.FhirSearchHelper;
 import de.gematik.zts.termzilla.common.metadatasearch.integration.helper.InMemoryLuceneTestHelper;
 import de.gematik.zts.termzilla.common.metadatasearch.lucene.fieldgenerators.helper.ResourceFieldGeneratorHelper;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -77,6 +80,10 @@ import org.junit.jupiter.api.Test;
  *   <li>Scope + resource type + single ID filtering
  *   <li>Scope + resource type + multiple ID filtering (OR combination)
  *   <li>Empty ID list handling (should be ignored)
+ *   <li>Test error handling for invalid scope values
+ *   <li>Test performance with large ID pre-filter lists
+ *   <li>Test special characters in scope names
+ *   <li>Test case sensitivity of resource types
  * </ul>
  *
  * <p><b>Filter Query Structure:</b>
@@ -84,15 +91,6 @@ import org.junit.jupiter.api.Test;
  * <pre>
  * +(scope:tenant1 +resourceType_tokenexact:CodeSystem +(id_tokenexact:cs-1 id_tokenexact:cs-2))
  * </pre>
- *
- * <p><b>TODO - Additional Test Cases:</b>
- *
- * <ul>
- *   <li>Test error handling for invalid scope values
- *   <li>Test performance with large ID pre-filter lists
- *   <li>Test special characters in scope names
- *   <li>Test case sensitivity of resource types
- * </ul>
  *
  * @see FhirSearchHelper
  * @see ResourceFieldGeneratorHelper
@@ -229,6 +227,40 @@ class LuceneIndexFilterByScopeTypeAndIdTest {
     }
 
     @Test
+    @DisplayName("Should return empty results for empty scope")
+    void shouldReturnEmptyForEmptyScope() throws IOException, InvalidRequestException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: A document with a configured, non-empty scope
+        prepareDocument(helper, "fhir", "CodeSystem", "cs-1");
+
+        // WHEN: Filtering with an empty scope
+        Query query = createScopeOnlyQuery("");
+        List<Document> results = helper.search(query);
+
+        // THEN: The empty scope must not match the document
+        assertEquals(0, results.size(), "Should find no documents for an empty scope");
+      }
+    }
+
+    @Test
+    @DisplayName("Should return empty results for scope with different casing")
+    void shouldReturnEmptyForScopeWithDifferentCasing() throws IOException, InvalidRequestException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: A document in the lowercase "fhir" scope
+        prepareDocument(helper, "fhir", "CodeSystem", "cs-1");
+
+        // WHEN: Filtering with a case-mismatched scope
+        Query query = createScopeOnlyQuery("FHIR");
+        List<Document> results = helper.search(query);
+
+        // THEN: Scope matching is exact and case-sensitive
+        assertEquals(0, results.size(), "Should find no documents for a case-mismatched scope");
+      }
+    }
+
+    @Test
     @DisplayName("Should isolate tenants completely")
     void shouldIsolateTenantsCompletely() throws IOException, InvalidRequestException {
       try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
@@ -249,6 +281,34 @@ class LuceneIndexFilterByScopeTypeAndIdTest {
             "cs-2",
             results.getFirst().get(FhirSearchHelper.RESOURCE_ID_FIELD),
             "Should find cs-1 from tenant2");
+      }
+    }
+
+    @Test
+    @DisplayName("Should fail fast for null scope values")
+    void shouldFailFastForNullScope() {
+      assertThrows(NullPointerException.class, () -> createScopeOnlyQuery(null));
+    }
+
+    @Test
+    @DisplayName("Should handle scope names with special characters")
+    void shouldHandleScopeNamesWithSpecialCharacters() throws IOException, InvalidRequestException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: Similar scopes with and without special characters
+        prepareDocument(helper, "tenant/bfarm:internal.test-1_0#prod", "CodeSystem", "cs-special");
+        prepareDocument(helper, "tenant-bfarm-internal-test-1_0-prod", "CodeSystem", "cs-plain");
+
+        // WHEN: Filter by special-character scope
+        Query query = createScopeOnlyQuery("tenant/bfarm:internal.test-1_0#prod");
+        List<Document> results = helper.search(query);
+
+        // THEN: Should match exact scope only
+        assertEquals(1, results.size(), "Should find exactly 1 document in special-character scope");
+        assertEquals(
+            "cs-special",
+            results.getFirst().get(FhirSearchHelper.RESOURCE_ID_FIELD),
+            "Should find cs-special only");
       }
     }
   }
@@ -322,6 +382,27 @@ class LuceneIndexFilterByScopeTypeAndIdTest {
         assertEquals(1, results.size(), "Should find 1 CodeSystem from fhir");
         assertEquals(
             "cs-1", results.getFirst().get(FhirSearchHelper.RESOURCE_ID_FIELD), "Should find cs-1");
+      }
+    }
+
+    @Test
+    @DisplayName("Should treat resource type as case-sensitive")
+    void shouldTreatResourceTypeAsCaseSensitive() throws IOException, InvalidRequestException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: One CodeSystem in scope
+        prepareDocument(helper, "fhir", "CodeSystem", "cs-1");
+
+        // WHEN: Filter using different casing
+        Query lowerCaseQuery = createScopeAndTypeQuery("fhir", "codesystem");
+        List<Document> lowerCaseResults = helper.search(lowerCaseQuery);
+
+        Query exactCaseQuery = createScopeAndTypeQuery("fhir", "CodeSystem");
+        List<Document> exactCaseResults = helper.search(exactCaseQuery);
+
+        // THEN: Only exact-case resource type should match
+        assertEquals(0, lowerCaseResults.size(), "Lowercase resource type should not match");
+        assertEquals(1, exactCaseResults.size(), "Exact-case resource type should match");
       }
     }
   }
@@ -417,6 +498,33 @@ class LuceneIndexFilterByScopeTypeAndIdTest {
 
         // THEN: Should find all CodeSystems (empty list ignored)
         assertEquals(3, results.size(), "Should find all 3 CodeSystems (empty ID list ignored)");
+      }
+    }
+
+    @Test
+    @DisplayName("Should handle large ID pre-filter lists")
+    void shouldHandleLargeIdPreFilterLists() throws IOException, InvalidRequestException {
+      try (InMemoryLuceneTestHelper helper = new InMemoryLuceneTestHelper()) {
+
+        // GIVEN: Indexed resources and a large ID pre-filter list
+        prepareDocument(helper, "fhir", "CodeSystem", "cs-target");
+        prepareDocument(helper, "fhir", "CodeSystem", "cs-other");
+
+        List<IdType> largeIdPreFilterList =
+            new ArrayList<>(
+                IntStream.range(0, 500).mapToObj(i -> new IdType("missing-" + i)).toList());
+        largeIdPreFilterList.add(new IdType("cs-target"));
+
+        // WHEN: Filter using the large ID list
+        Query query = createFullFilterQuery("fhir", "CodeSystem", largeIdPreFilterList);
+        List<Document> results = helper.search(query);
+
+        // THEN: Should still return the matching resource correctly
+        assertEquals(1, results.size(), "Should find exactly 1 matching resource");
+        assertEquals(
+            "cs-target",
+            results.getFirst().get(FhirSearchHelper.RESOURCE_ID_FIELD),
+            "Should find cs-target");
       }
     }
   }

@@ -27,6 +27,7 @@ import ca.uhn.fhir.rest.param.TokenOrListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
 import de.gematik.zts.termzilla.api.exceptions.CacheKeyCreationException;
+import de.gematik.zts.termzilla.api.exceptions.InvalidSearchParameterException;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -34,6 +35,7 @@ import java.util.Optional;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.utilities.CanonicalPair;
 
 @Setter
 @SuperBuilder(buildMethodName = "buildInternal")
@@ -168,7 +170,7 @@ public class TerminologyResourceSearchParameter implements Serializable {
 
   // Splits a parameter in the format "url|version" and stores version separately.
   protected void extractVersionFromParam(UriParam param) {
-    if (param != null && versionParam == null) {
+    if (param != null && param.getValue() != null && versionParam == null) {
       String[] parts = param.getValue().split("\\|", 2);
       if (parts.length == 2
           && StringUtils.isNotEmpty(parts[0])
@@ -179,8 +181,36 @@ public class TerminologyResourceSearchParameter implements Serializable {
     }
   }
 
+  /** Validates structural constraints; also called at the service boundary for mutable objects. */
+  public void validate() {
+    validateNoDuplicateVersion(urlParam, SP_URL);
+  }
+
+  protected void validateNoDuplicateVersion(UriParam canonicalParam, String parameterName) {
+    if (versionParam == null || canonicalParam == null || canonicalParam.getValue() == null) {
+      return;
+    }
+    CanonicalPair canonicalPair = new CanonicalPair(canonicalParam.getValue());
+    if (canonicalPair.hasNonEmptyVersion()) {
+      throw new InvalidSearchParameterException(
+          "Version must not be set in '" + parameterName + "' parameter if 'version' parameter is used.");
+    }
+  }
+
+  /** Copies a URI search parameter, including its qualifier and missing modifier. */
+  protected static UriParam copyUriParam(UriParam param) {
+    if (param == null) {
+      return null;
+    }
+    UriParam copy = new UriParam(param.getValue());
+    copy.setQualifier(param.getQualifier());
+    copy.setMissing(param.getMissing());
+    return copy;
+  }
+
   /** Applies normalization after builder-based instantiation. */
   protected void postBuildNormalize() {
+    urlParam = copyUriParam(urlParam);
     extractVersionFromParam(urlParam);
   }
 
@@ -191,6 +221,7 @@ public class TerminologyResourceSearchParameter implements Serializable {
     public C build() {
       C parameter = buildInternal();
       parameter.postBuildNormalize();
+      parameter.validate();
       return parameter;
     }
   }

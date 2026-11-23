@@ -188,13 +188,15 @@ public class CombiningTerminologyService {
         Math.min(terminologyProviders.size(), Runtime.getRuntime().availableProcessors());
 
     try (ExecutorService providerExecutor = Executors.newFixedThreadPool(parallelTasks)) {
-      // TODO: make default Scope configurable
       List<Callable<TerminologyManager>> tasks =
           terminologyProviders.stream()
               .map(
                   provider ->
                       (Callable<TerminologyManager>)
-                          () -> provider.create(Path.of(properties.getBaseWorkingDir()), "fhir"))
+                          () ->
+                              provider.create(
+                                  Path.of(properties.getBaseWorkingDir()),
+                                  properties.getDefaultScope()))
               .toList();
 
       List<Future<TerminologyManager>> futures = providerExecutor.invokeAll(tasks);
@@ -417,9 +419,7 @@ public class CombiningTerminologyService {
       return cachedResult;
     }
 
-    // TODO parameter validation should be done as a post action of the builder in the Parameter
-    // class itself
-    // Parametervalidierung
+    // Revalidate mutable parameters and enforce Core-specific search restrictions.
     CombiningCsSearchParameterValidator.validateParameters(csSearchParameter);
 
     // Weiterreichen der Anfrage an die zuständige Operation
@@ -552,11 +552,6 @@ public class CombiningTerminologyService {
     csFindMatchesParameter.setLanguageDefaultSystemLanguage(languageSystemDefault);
 
     // Parametervalidierung
-    // TODO discuss: this calls the abstract class method, which is overridden in the individual
-    // managers.
-    // This results in multiple validations of the same parameters, which is not ideal. We should
-    // refactor this to avoid redundant validations.
-    // Though if the modules are used standalone, they also need parameter validation
     new CombiningCsFindMatchesParameterValidator().validateParameters(csFindMatchesParameter);
 
     return CombiningCsFindMatchesOperation.findMatches(this, scope, csFindMatchesParameter);
@@ -628,14 +623,10 @@ public class CombiningTerminologyService {
       return cachedResult;
     }
 
-    // TODO parameter validation should be done as a post action of the builder in the Parameter
-    // class itself
-    // Parametervalidierung
+    // Revalidate mutable parameters and enforce Core-specific search restrictions.
     CombiningVsSearchParameterValidator.validateParameters(vsSearchParameter);
 
-    // Wenn ein 'code'-Parameter übergeben wurde, müssen wir anders agieren, als bei den anderen
-    // Szenarien. Deshalb entfernen wir ihn erstmal aus der Parameterliste und merken ihn uns für
-    // spätere Verabeitungsschritte. TODO: Aktuell failen wir einfach
+    // Searching ValueSets by code is not supported yet.
     Optional<TokenParam> codeParam = vsSearchParameter.getCode();
     if (codeParam.isPresent()) {
       vsSearchParameter.setCodeParam(null);
@@ -953,9 +944,7 @@ public class CombiningTerminologyService {
       return cachedResult;
     }
 
-    // TODO parameter validation should be done as a post action of the builder in the Parameter
-    // class itself
-    // Parametervalidierung
+    // Revalidate mutable parameters and enforce Core-specific search restrictions.
     CombiningCmSearchParameterValidator.validateParameters(cmSearchParameter);
 
     // Suche nach CodeSystemen anhand der verbliebenen Parameter innerhalb des Suchindex

@@ -46,7 +46,7 @@ import de.gematik.zts.termzilla.api.interfaces.properties.ConceptProperties;
 import de.gematik.zts.termzilla.api.interfaces.properties.GenericConceptProperty;
 import de.gematik.zts.termzilla.api.parameters.CsLookupParameter;
 import de.gematik.zts.termzilla.api.parameters.CsLookupResult;
-import de.gematik.zts.termzilla.common.constants.CanonicalUrl;
+import de.gematik.zts.termzilla.common.constants.StandardTerminologyCanonicalUrls;
 import de.gematik.zts.termzilla.terminologies.common.LanguageSelectionParameter;
 import de.gematik.zts.termzilla.terminologies.snomed.Snomed;
 import de.gematik.zts.termzilla.terminologies.snomed.SnomedCodeSystemService;
@@ -550,7 +550,7 @@ class SnomedCodeSystemLookupOperationTest {
           .satisfies(
               p -> {
                 StringType value = (StringType) ((BaseTypeConceptProperty) p).getValue();
-                assertThat(value.getValue()).isEqualTo(CanonicalUrl.SNOMEDCT);
+                assertThat(value.getValue()).isEqualTo(StandardTerminologyCanonicalUrls.SNOMEDCT);
               });
     }
 

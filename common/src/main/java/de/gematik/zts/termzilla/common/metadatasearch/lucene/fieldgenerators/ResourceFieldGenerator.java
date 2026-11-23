@@ -90,10 +90,6 @@ public abstract class ResourceFieldGenerator<R extends Resource> {
 
 
     // ---------------------------------------------------------------
-    // ELEMENT: [Resource-Content] --> SEARCHPARAM: _content (string)
-    // TODO this means we need to add this for every string content we find in the resource?
-
-    // ---------------------------------------------------------------
     // Process ELEMENTS that are associated with the Meta information of the resource
     if (resource.hasMeta()) {
       processMetaElements(document, resource, fieldStore);

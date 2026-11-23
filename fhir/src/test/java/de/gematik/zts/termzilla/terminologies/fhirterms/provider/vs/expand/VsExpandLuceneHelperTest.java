@@ -44,6 +44,7 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermQuery;
@@ -240,6 +241,21 @@ class VsExpandLuceneHelperTest {
       // THEN
       assertThat(query).isNotNull();
       assertThat(query.toString()).contains("property_weight_long");
+    }
+
+    @Test
+    @DisplayName("Should build match-nothing query for non-integer value on integer property")
+    void shouldBuildMatchNoDocsQueryForNonIntegerValue() {
+      // GIVEN
+      CodeSystem codeSystem =
+          createCodeSystemWithPropertyOfType("weight", CodeSystem.PropertyType.INTEGER);
+      VsExpandLuceneHelper helper = new VsExpandLuceneHelper(indexSearcher, TEST_SCOPE, codeSystem);
+
+      // WHEN
+      Query query = helper.buildPropertyEqualsQuery("weight", "abc");
+
+      // THEN
+      assertThat(query).isInstanceOf(MatchNoDocsQuery.class);
     }
 
     @Test

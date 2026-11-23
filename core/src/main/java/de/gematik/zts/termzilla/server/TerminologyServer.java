@@ -125,9 +125,5 @@ public class TerminologyServer extends RestfulServer {
 
     // Logging-Interceptor
     registerInterceptor(new MyLogInterceptor());
-
-    // Formatieren der zurückgegebenen Objekte
-    // TODO do we want to use a ResponseHighlighterInterceptor in production or only for
-    // testing/debugging?
   }
 }

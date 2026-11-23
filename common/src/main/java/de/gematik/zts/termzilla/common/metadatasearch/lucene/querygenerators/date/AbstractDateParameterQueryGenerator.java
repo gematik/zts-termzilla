@@ -208,8 +208,6 @@ public abstract class AbstractDateParameterQueryGenerator {
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(param.getValue());
 
-    // TODO think about time zone fun as a single day might have more than 24 hours
-
     long from;
     long to;
 

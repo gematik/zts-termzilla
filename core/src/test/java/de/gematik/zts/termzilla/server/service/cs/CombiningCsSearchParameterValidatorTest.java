@@ -75,10 +75,8 @@ class CombiningCsSearchParameterValidatorTest {
     void shouldThrowWhenSystemAndUrlAreProvidedAtTheSameTime() {
       // GIVEN
       CsSearchParameter parameters =
-          CsSearchParameter.builder()
-              .systemParam(new UriParam("http://system.test"))
-              .urlParam(new UriParam("http://url.test"))
-              .build();
+          CsSearchParameter.builder().systemParam(new UriParam("http://system.test")).build();
+      parameters.setUrlParam(new UriParam("http://url.test"));
 
       // WHEN / THEN
       assertThatThrownBy(() -> CombiningCsSearchParameterValidator.validateParameters(parameters))
@@ -93,10 +91,8 @@ class CombiningCsSearchParameterValidatorTest {
     void shouldThrowWhenUrlContainsVersionAndVersionParameterIsAlsoSet() {
       // GIVEN
       CsSearchParameter parameters =
-          CsSearchParameter.builder()
-              .urlParam(new UriParam("http://url.test|1.0.0"))
-              .versionParam(new TokenParam("2.0.0"))
-              .build();
+          CsSearchParameter.builder().versionParam(new TokenParam("2.0.0")).build();
+      parameters.setUrlParam(new UriParam("http://url.test|1.0.0"));
 
       // WHEN / THEN
       assertThatThrownBy(() -> CombiningCsSearchParameterValidator.validateParameters(parameters))
@@ -154,8 +150,8 @@ class CombiningCsSearchParameterValidatorTest {
       CsSearchParameter parameters =
           CsSearchParameter.builder()
               .contentParam(new StringParam(CodesystemContentMode.NOTPRESENT.toCode()))
-              .languageParam(new TokenParam("de"))
               .build();
+      parameters.setLanguageParam(new TokenParam("de"));
 
       // WHEN / THEN
       assertThatThrownBy(() -> CombiningCsSearchParameterValidator.validateParameters(parameters))
@@ -171,8 +167,8 @@ class CombiningCsSearchParameterValidatorTest {
       CsSearchParameter parameters =
           CsSearchParameter.builder()
               .contentParam(new StringParam(CodesystemContentMode.NOTPRESENT.toCode()))
-              .codeParam(new TokenParam("12345"))
               .build();
+      parameters.setCodeParam(new TokenParam("12345"));
 
       // WHEN / THEN
       assertThatThrownBy(() -> CombiningCsSearchParameterValidator.validateParameters(parameters))
@@ -186,10 +182,8 @@ class CombiningCsSearchParameterValidatorTest {
     void shouldThrowWhenContentIsNotSupplementAndSupplementsParameterIsSet() {
       // GIVEN
       CsSearchParameter parameters =
-          CsSearchParameter.builder()
-              .contentParam(new StringParam("complete"))
-              .supplementsParam(new ReferenceParam("CodeSystem/supplement"))
-              .build();
+          CsSearchParameter.builder().contentParam(new StringParam("complete")).build();
+      parameters.setSupplementsParam(new ReferenceParam("CodeSystem/supplement"));
 
       // WHEN / THEN
       assertThatThrownBy(() -> CombiningCsSearchParameterValidator.validateParameters(parameters))

@@ -321,7 +321,6 @@ public final class TokenParameterQueryGenerator {
     throw new NotImplementedException(":of-type modifier not implemented yet in search engine");
   }
 
-  // TODO: check behavior against FHIR spec
 
   /**
    * Prepares a standard exact-match query for a token parameter.

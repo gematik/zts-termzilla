@@ -29,8 +29,11 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.apache.ApacheRestfulClientFactory;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import de.gematik.zts.termzilla.api.parameters.VsExpandParameter;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+
 import org.hl7.fhir.r4.model.IntegerType;
 import org.hl7.fhir.r4.model.Parameters;
 import org.hl7.fhir.r4.model.ValueSet;
@@ -40,85 +43,108 @@ import org.slf4j.LoggerFactory;
 // Used in E2E Test (CombiningTerminologyServiceTest)
 public class FhirTerminologyTool {
 
-  private static final Logger log = LoggerFactory.getLogger(FhirTerminologyTool.class);
-  private FhirContext ctx = FhirContext.forR4Cached();
-  private IGenericClient client;
+    private static final Logger log = LoggerFactory.getLogger(FhirTerminologyTool.class);
+    private final IGenericClient client;
 
-  public FhirTerminologyTool(String fhirBaseUrl) {
-
-    ApacheRestfulClientFactory factory = (ApacheRestfulClientFactory) ctx.getRestfulClientFactory();
-    factory.setSocketTimeout(120000);
-    factory.setConnectTimeout(120000);
-    factory.setConnectionRequestTimeout(120000);
-    client = ctx.newRestfulGenericClient(fhirBaseUrl);
-  }
-
-  public List<ValueSet.ValueSetExpansionContainsComponent> expandVs(VsExpandParameter expandParam) {
-
-    Parameters parameters = new Parameters();
-
-    if (expandParam.getValueSetParam() != null && !expandParam.getValueSetParam().isEmpty()) {
-
-      ValueSet valueSet = expandParam.getValueSetParam().copy();
-      valueSet.setExpansion(null);
-
-      parameters.addParameter().setName(VALUESET_PARAM).setResource(valueSet);
+    public FhirTerminologyTool(String fhirBaseUrl) {
+        this(createClient(fhirBaseUrl));
     }
 
-    if (expandParam.getUrlParam() != null && !expandParam.getUrlParam().isEmpty()) {
-      parameters.addParameter().setName(URL_PARAM).setValue(expandParam.getUrlParam());
+    public FhirTerminologyTool(IGenericClient client) {
+        this.client = Objects.requireNonNull(client);
     }
 
-    if (expandParam.getValueSetVersionParam() != null
-        && !expandParam.getValueSetVersionParam().isEmpty()) {
-      // TODO is there anything that should be done here?
+    private static IGenericClient createClient(String fhirBaseUrl) {
+        FhirContext ctx = FhirContext.forR4Cached();
+        ApacheRestfulClientFactory factory = (ApacheRestfulClientFactory) ctx.getRestfulClientFactory();
+        factory.setSocketTimeout(120000);
+        factory.setConnectTimeout(120000);
+        factory.setConnectionRequestTimeout(120000);
+        return ctx.newRestfulGenericClient(fhirBaseUrl);
     }
-    parameters
-        .addParameter()
-        .setName(VALUESET_VERSION_PARAM)
-        .setValue(expandParam.getValueSetVersionParam());
 
-    List<ValueSet.ValueSetExpansionContainsComponent> completeContainsList = new ArrayList<>();
-    long total;
+    public List<ValueSet.ValueSetExpansionContainsComponent> expandVs(VsExpandParameter expandParam) {
 
-    do {
+        Parameters parameters = new Parameters();
 
-      long offset = completeContainsList.size();
-      log.info("Expanding ValueSet with offset: {}", offset);
+        if (expandParam.getValueSetParam() != null && !expandParam.getValueSetParam().isEmpty()) {
 
-      // Execute the expansion operation
-      ValueSet vs = executeExpandVs(parameters, offset);
+            ValueSet valueSet = expandParam.getValueSetParam().copy();
+            valueSet.setExpansion(null);
 
-      // Add the contains components to the complete list
-      completeContainsList.addAll(vs.getExpansion().getContains());
+            parameters.addParameter().setName(VALUESET_PARAM).setResource(valueSet);
+        }
 
-      // Check if there are more pages to fetch
-      total = vs.getExpansion().getTotalElement().getValue().longValue();
-    } while (total > completeContainsList.size());
+        if (expandParam.getUrlParam() != null && !expandParam.getUrlParam().isEmpty()) {
+            parameters.addParameter().setName(URL_PARAM).setValue(expandParam.getUrlParam());
+        }
 
-    log.info("Expanded ValueSet contains {} concepts", completeContainsList.size());
+        if (expandParam.getValueSetVersionParam() != null
+                && !expandParam.getValueSetVersionParam().isEmpty()) {
+            parameters
+                    .addParameter()
+                    .setName(VALUESET_VERSION_PARAM)
+                    .setValue(expandParam.getValueSetVersionParam());
+        }
 
-    return completeContainsList;
-  }
+        List<ValueSet.ValueSetExpansionContainsComponent> completeContainsList = new ArrayList<>();
+        long total;
 
-  private ValueSet executeExpandVs(Parameters parameters, long startFrom) {
+        do {
+            long offset = completeContainsList.size();
+            log.info("Expanding ValueSet with offset: {}", offset);
 
-    Parameters newParam = parameters.copy();
-    newParam.addParameter(OFFSET_PARAM, new IntegerType(startFrom));
+            // Execute the expansion operation
+            ValueSet vs = executeExpandVs(parameters, offset);
 
-    try {
-      Parameters returnParams =
-          client
-              .operation()
-              .onType(ValueSet.class)
-              .named("$expand")
-              .withParameters(newParam)
-              .execute();
-      return (ValueSet) returnParams.getParameterFirstRep().getResource();
-    } catch (Exception e) {
+            // Add the contains components to the complete list
+            ValueSet.ValueSetExpansionComponent expansion = vs.getExpansion();
+            int previousSize = completeContainsList.size();
+            completeContainsList.addAll(expansion.getContains());
+            // Check if there are more pages to fetch
+            total =
+                    expansion.hasTotal()
+                            ? expansion.getTotalElement().getValue().longValue()
+                            : completeContainsList.size();
+            if (total > completeContainsList.size() && completeContainsList.size() == previousSize) {
+                throw new IllegalStateException(
+                        "ValueSet expansion returned no concepts before reaching its reported total of "
+                                + total);
+            }
+        } while (total > completeContainsList.size());
 
-      log.error(e.getMessage());
-      throw new RuntimeException(e);
+        log.info("Expanded ValueSet contains {} concepts", completeContainsList.size());
+
+        return completeContainsList;
     }
-  }
+
+    private ValueSet executeExpandVs(Parameters parameters, long startFrom) {
+
+        Parameters newParam = parameters.copy();
+        newParam.addParameter(OFFSET_PARAM, new IntegerType(startFrom));
+
+        Parameters returnParams;
+        try {
+            returnParams =
+                    client
+                            .operation()
+                            .onType(ValueSet.class)
+                            .named("$expand")
+                            .withParameters(newParam)
+                            .execute();
+        } catch (Exception e) {
+            log.error("Failed to expand ValueSet at offset {}", startFrom, e);
+            throw new RuntimeException("Failed to expand ValueSet at offset " + startFrom, e);
+        }
+
+        if (returnParams == null
+                || !returnParams.hasParameter()
+                || !(returnParams.getParameterFirstRep().getResource() instanceof ValueSet valueSet)
+                || !valueSet.hasExpansion()) {
+            throw new IllegalStateException(
+                    "FHIR $expand response did not contain a ValueSet with an expansion");
+        }
+
+        return valueSet;
+    }
 }

@@ -43,9 +43,6 @@ import org.hl7.fhir.r4.model.CodeSystem.CodeSystemContentMode;
 import org.hl7.fhir.r4.model.ValueSet;
 import org.hl7.fhir.r4.model.ValueSet.ConceptSetComponent;
 
-// TODO: implement more filter
-// TODO: care about supplements
-
 /**
  * Orchestrates explicit ValueSet expansion operations for generic FHIR terminology packages.
  *
@@ -506,9 +503,6 @@ public class FhirTermsVsExplicitExpandOperation {
 
     // Aufteilen der Filter nach Verantwortlichkeiten
     PartitionedFilters partitioned = PartitionedFilters.from(includeElement.getFilter());
-
-    // TODO: Momentan wenden wir den resultFilter in einer In-Memory-Variante an. Vermutlich ließe
-    //  sich hier auch nochmal richtig Performance gewinnen, wenn wir das über Lucene machen
 
     // Lucene-kompatible Filter als kombinierte Query ausführen
     Set<ConceptBaseInfo> luceneResultSet = null;

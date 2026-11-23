@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
-import de.gematik.zts.termzilla.common.constants.CanonicalUrl;
+import de.gematik.zts.termzilla.common.constants.StandardTerminologyCanonicalUrls;
 import de.gematik.zts.termzilla.testing.BaseFhirIT;
 import de.gematik.zts.termzilla.testutils.packages.TestPackageHelper;
 import de.gematik.zts.termzilla.testutils.packages.generator.PackageGeneration;
@@ -362,7 +362,7 @@ class SnomedRestrictedModeIT extends BaseFhirIT {
 
   private static Parameters lookupParams(String code) {
     Parameters params = new Parameters();
-    params.addParameter().setName("system").setValue(new UriType(CanonicalUrl.SNOMEDCT));
+    params.addParameter().setName("system").setValue(new UriType(StandardTerminologyCanonicalUrls.SNOMEDCT));
     params.addParameter().setName("version").setValue(new StringType(SNOMED_VERSION));
     params.addParameter().setName("code").setValue(new CodeType(code));
     return params;
@@ -370,7 +370,7 @@ class SnomedRestrictedModeIT extends BaseFhirIT {
 
   private static Parameters findMatchesParams(String propertyCode, Type value) {
     Parameters params = new Parameters();
-    params.addParameter().setName("system").setValue(new UriType(CanonicalUrl.SNOMEDCT));
+    params.addParameter().setName("system").setValue(new UriType(StandardTerminologyCanonicalUrls.SNOMEDCT));
     params.addParameter().setName("version").setValue(new StringType(SNOMED_VERSION));
     params.addParameter().setName("exact").setValue(new BooleanType(false));
     Parameters.ParametersParameterComponent property = params.addParameter().setName("property");
@@ -382,7 +382,7 @@ class SnomedRestrictedModeIT extends BaseFhirIT {
   private static Parameters validateCodeParams(String code) {
     Parameters params = new Parameters();
     params.addParameter().setName("code").setValue(new CodeType(code));
-    params.addParameter().setName("system").setValue(new UriType(CanonicalUrl.SNOMEDCT));
+    params.addParameter().setName("system").setValue(new UriType(StandardTerminologyCanonicalUrls.SNOMEDCT));
     return params;
   }
 
@@ -397,7 +397,7 @@ class SnomedRestrictedModeIT extends BaseFhirIT {
   private static ValueSet.ConceptSetComponent snomedFilterInclude(
       String property, String operator, String value) {
     ValueSet.ConceptSetComponent include = new ValueSet.ConceptSetComponent();
-    include.setSystem(CanonicalUrl.SNOMEDCT);
+    include.setSystem(StandardTerminologyCanonicalUrls.SNOMEDCT);
     include
         .addFilter()
         .setProperty(property)

@@ -104,23 +104,10 @@ import org.junit.jupiter.api.Test;
  * <ul>
  *   <li><b>Case-Insensitivity:</b> All code values are lowercased for indexing and searching. While
  *       this enables flexible matching, it may not align with code system-specific case sensitivity
- *       rules (see TODO comment in test at line ~228). This is a known trade-off in generic FHIR
+ *       rules. This is a known trade-off in generic FHIR
  *       search implementation.
  * </ul>
  *
- * <p><b>TODO - Additional Test Cases (to be implemented after REST operation support):</b>
- *
- * <ul>
- *   <li>Test multiple codes with OR combination (e.g., {@code ?status=active,draft})
- *   <li>Test multiple codes with AND combination (multiple {@code status} parameters)
- *   <li>Test {@code :missing} modifier for code presence/absence
- *   <li>Test exception handling: verify {@code NotImplementedException} for unsupported modifiers
- *       ({@code :text}, {@code :above}, {@code :below}, {@code :in}, {@code :not-in}, {@code
- *       :of-type})
- *   <li>Test edge cases: very long codes, URL-encoded codes, unicode characters
- *   <li>Test sorting by code values
- *   <li>Test search for system-only (e.g., {@code status=http://hl7.org/fhir/publication-status|})
- * </ul>
  *
  * @see TokenParameterQueryGenerator
  * @see ResourceFieldGeneratorHelper#addCodeTokenParamFieldToDocument
@@ -332,9 +319,6 @@ class LuceneIndexSearchByCodeTokenIntegrationTest {
       }
     }
 
-    // TODO: Mhmm, eigentlich kommt es aber auf das dahinterliegende CS an, ob case-sensitive oder
-    //  nicht... --> Das ist aber gar nicht richtig abbildbar, wenn man das generisch bauen möchte
-    //  (Spezifikationsproblem?!)
     @Test
     @DisplayName("Should perform case-insensitive code matching")
     void shouldPerformCaseInsensitiveMatching() throws IOException, NotImplementedException {

@@ -95,11 +95,12 @@ public class AnswerListVersion {
     }
     return Objects.equals(answerListId, other.answerListId)
         && Objects.equals(answerListName, other.answerListName)
+        && Objects.equals(status, other.status)
         && Objects.equals(answerIds, other.answerIds);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(answerListId, answerListName, answerIds);
+    return Objects.hash(answerListId, answerListName, status, answerIds);
   }
 }

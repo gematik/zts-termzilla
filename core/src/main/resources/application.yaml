@@ -29,11 +29,11 @@ core:
   resourceRetrievalMode: STRIPPED
 
 # ========================================
-# Security Configuration (TODO)
+# Security Configuration
 # ========================================
   security:
     cors:
-      allowedOrigins: "http://localhost:3000,https://fragebogen.apps.osc.fokus.fraunhofer.de"
+      allowedOrigins: "http://localhost:3000,https://example.com"
       allowedMethods: "GET,POST,OPTIONS"
       allowedHeaders: "*"
       allowCredentials: true

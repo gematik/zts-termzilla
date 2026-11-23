@@ -75,24 +75,30 @@ final class ConceptPropertyMatcher {
       // Simple string comparison
       return cpc.getValueStringType().getValue().equals(expectedValue);
     } else if (cpc.hasValueBooleanType()) {
-      // Boolean-Wert-Vergleich (true/false)
+      // Boolean comparison (true/false)
       return cpc.getValueBooleanType().getValue().toString().equals(expectedValue);
     } else if (cpc.hasValueCodeType()) {
-      // Code-Wert-Vergleich
+      // Coded value comparison
       return cpc.getValueCodeType().getValue().equals(expectedValue);
     } else if (cpc.hasValueCoding()) {
       throw new InvalidRequestException("Coding type is not supported in filter");
     } else if (cpc.hasValueDateTimeType()) {
       throw new InvalidRequestException("DateTimeType type is not supported in filter");
-    } else if (cpc.hasValueDecimalType()) {
-      // TODO: testen
-      return cpc.getValueDecimalType().getValue().equals(new BigDecimal(expectedValue));
-    } else if (cpc.hasValueIntegerType()) {
-      // TODO: testen
-      return cpc.getValueIntegerType().getValue().longValue() == Long.parseLong(expectedValue);
     }
 
-    // Wenn wir hier ankommen, dann haben wir einen Typ, den wir nicht unterstützen
+    // we don't want to trigger an HTTP 500 error if the input is not a valid number
+    try {
+      if (cpc.hasValueDecimalType()) {
+        // Explicit comparison; e.g. 1.5 does not equal 1.50; Consistent with lucene
+        return cpc.getValueDecimalType().getValue().equals(new BigDecimal(expectedValue));
+      } else if (cpc.hasValueIntegerType()) {
+        return cpc.getValueIntegerType().getValue().longValue() == Long.parseLong(expectedValue);
+      }
+    } catch (NumberFormatException _) {
+      return false;
+    }
+
+    // If we reach here, we have a type that we do not support
     return false;
   }
 

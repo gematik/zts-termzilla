@@ -68,10 +68,8 @@ class CombiningCmSearchParameterValidatorTest {
     void shouldThrowWhenSourceCanonicalAndSourceUriAreSetTogether() {
       // GIVEN
       CmSearchParameter parameters =
-          CmSearchParameter.builder()
-              .sourceCanonicalParam(new ReferenceParam(SOURCE_CANONICAL))
-              .sourceUriParam(new ReferenceParam(SOURCE_URI))
-              .build();
+          CmSearchParameter.builder().sourceCanonicalParam(new ReferenceParam(SOURCE_CANONICAL)).build();
+      parameters.setSourceUriParam(new ReferenceParam(SOURCE_URI));
 
       // WHEN / THEN
       assertThatThrownBy(() -> CombiningCmSearchParameterValidator.validateParameters(parameters))
@@ -85,10 +83,8 @@ class CombiningCmSearchParameterValidatorTest {
     void shouldThrowWhenTargetCanonicalAndTargetUriAreSetTogether() {
       // GIVEN
       CmSearchParameter parameters =
-          CmSearchParameter.builder()
-              .targetCanonicalParam(new ReferenceParam(TARGET_CANONICAL))
-              .targetUriParam(new ReferenceParam(TARGET_URI))
-              .build();
+          CmSearchParameter.builder().targetCanonicalParam(new ReferenceParam(TARGET_CANONICAL)).build();
+      parameters.setTargetUriParam(new ReferenceParam(TARGET_URI));
 
       // WHEN / THEN
       assertThatThrownBy(() -> CombiningCmSearchParameterValidator.validateParameters(parameters))
@@ -102,10 +98,8 @@ class CombiningCmSearchParameterValidatorTest {
     void shouldThrowWhenVersionIsSetAndUrlAlreadyContainsAVersion() {
       // GIVEN
       CmSearchParameter parameters =
-          CmSearchParameter.builder()
-              .urlParam(new UriParam("http://example.org/ConceptMap/test|1.0.0"))
-              .versionParam(new TokenParam("2.0.0"))
-              .build();
+          CmSearchParameter.builder().versionParam(new TokenParam("2.0.0")).build();
+      parameters.setUrlParam(new UriParam("http://example.org/ConceptMap/test|1.0.0"));
 
       // WHEN / THEN
       assertThatThrownBy(() -> CombiningCmSearchParameterValidator.validateParameters(parameters))

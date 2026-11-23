@@ -30,9 +30,6 @@ import lombok.Setter;
 @Builder
 public class ParamData {
 
-  // number
-  // TODO
-
   // date
   public static final String INSTANT_DATE_PARAM = "instant_date_param";
   public static final String PERIOD_DATE_PARAM = "period_date_param";
@@ -51,12 +48,6 @@ public class ParamData {
   // reference
   public static final String REFERENCE_PARAM = "reference_param";
   public static final String CANONICAL_REFERENCE_PARAM = "canonical_reference_param";
-
-  // composite
-  // TODO
-
-  // quantity
-  // TODO
 
   // uri
   public static final String URI_PARAM = "uri_param";

@@ -50,7 +50,7 @@ public class CodeSystemFieldGenerator extends MetadataResourceFieldGenerator<Cod
 
     // SEARCHPARAM: language (token)
     // ELEMENT: CodeSystem.concept.designation.language [0..1] (code)
-    // TODO: Implementation missing
+
   }
 
   @Override

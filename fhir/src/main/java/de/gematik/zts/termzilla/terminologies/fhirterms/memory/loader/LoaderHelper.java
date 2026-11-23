@@ -20,6 +20,7 @@
  */
 package de.gematik.zts.termzilla.terminologies.fhirterms.memory.loader;
 
+import de.gematik.zts.termzilla.terminologies.fhirterms.exceptions.ResourceLoadingException;
 import de.gematik.zts.termzilla.terminologies.fhirterms.fhirpackage.model.packagemanifest.PackageManifest;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -32,8 +33,6 @@ import org.hl7.fhir.r4.model.MetadataResource;
 @Slf4j
 public class LoaderHelper {
 
-  // TODO: Der Namespace sollte sich eigentlich aus der TX-Version, TX-Konfiguration und der
-  //  FHIR-Modul-Konfiguration ergeben. Das müssen wir in der nächsten Iteration nachziehen
   private static final UUID NAMESPACE = UUID.fromString("8f008b5e-a132-48c0-ac2f-b112c74ca898");
 
   private LoaderHelper() {}
@@ -72,11 +71,12 @@ public class LoaderHelper {
 
       return uuidV5(NAMESPACE, composedId.toString().getBytes(StandardCharsets.UTF_8)).toString();
     } else {
-      // Für den Fall, dass wir keine URL haben, generieren wir eine zufällige UUID - Das dürfte
-      // jedoch eigentlich nicht passieren
-      // TODO: Vielleicht sollten wir hier stattdessen eine Ausnahme werfen, da eine fehlende URL
-      //  eigentlich ein Fehler in der Datenquelle darstellt?
-      return UUID.randomUUID().toString();
+
+      // In case the resource has no URL, we throw an exception, as this situation should not
+      // occur and indicates a data source error.
+      throw new ResourceLoadingException(
+          "Cannot generate UUID: resource has no URL. (package %s#%s)".formatted(packageName, packageVersion)
+      );
     }
   }
 

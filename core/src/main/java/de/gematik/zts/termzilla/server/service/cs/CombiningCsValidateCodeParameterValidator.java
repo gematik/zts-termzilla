@@ -60,7 +60,6 @@ public class CombiningCsValidateCodeParameterValidator extends CommonParameterVa
     failOnUrlXorCodableConceptXorCodingParameter(parameters);
     failOnUrlWithoutCodeParameter(parameters);
     failOnDisplayLanguageWithoutDisplayParameter(parameters);
-    // TODO: Keep validateDateNotInFuture for later activation once 'date' becomes supported.
   }
 
   // Entweder eine url oder ein valueSet muss angegeben sein

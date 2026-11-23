@@ -3,13 +3,13 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.gematik.zts</groupId>
-  <version>1.1.0-b76</version>
+  <version>1.1.1-b93</version>
   <artifactId>termzilla</artifactId>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.1.2</version>
+    <version>4.2.0</version>
     <relativePath/>
   </parent>
 
@@ -76,11 +76,11 @@
     <microprofile.config.version>3.1.3</microprofile.config.version>
     <smallrye.config.version>4.2.2</smallrye.config.version>
     <okhttp.version>5.5.1</okhttp.version>
-    <fasterxml.jackson.version>2.22.4</fasterxml.jackson.version>
-    <fasterxml.jackson.annotations.version>2.22</fasterxml.jackson.annotations.version>
+    <fasterxml.jackson.version>2.23.0</fasterxml.jackson.version>
+    <fasterxml.jackson.annotations.version>2.23</fasterxml.jackson.annotations.version>
     <!-- for relocated jackson dependencies (tools.jackson.x) -->
-    <tools.jackson.version>3.2.4</tools.jackson.version>
-    <logback.version>1.6.6</logback.version>
+    <tools.jackson.version>3.3.0</tools.jackson.version>
+    <logback.version>1.6.8</logback.version>
     <logstash.logback.version>9.0</logstash.logback.version>
 
     <!-- Code Coverage and QS Properties -->
@@ -92,6 +92,7 @@
     </sonar.coverage.jacoco.xmlReportPaths>
     <sonar.coverage.exclusions>testutils/src/main/java/**,**/module-info.java,**/package-info.java</sonar.coverage.exclusions>
     <sonar.language>java</sonar.language>
+    <janino.version>3.1.12</janino.version>
   </properties>
 
   <dependencyManagement>
@@ -232,6 +233,13 @@
         <groupId>org.antlr</groupId>
         <artifactId>antlr4-runtime</artifactId>
         <version>${antlr.version}</version>
+      </dependency>
+
+      <!-- janino -->
+      <dependency>
+        <groupId>org.codehaus.janino</groupId>
+        <artifactId>janino</artifactId>
+        <version>${janino.version}</version>
       </dependency>
 
       <!-- JGraphT - Graphenbibliothek -->
@@ -397,7 +405,7 @@
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
-        <version>3.21.0</version>
+        <version>3.22.0</version>
       </dependency>
 
       <!-- CVE-2025-48734 (transitive dependency opencsv and snomed-scg-parser)-->
@@ -420,26 +428,26 @@
       <dependency>
         <groupId>org.apache.tomcat.embed</groupId>
         <artifactId>tomcat-embed-core</artifactId>
-        <version>11.0.27</version>
+        <version>11.0.29</version>
       </dependency>
       <dependency>
         <groupId>org.apache.tomcat.embed</groupId>
         <artifactId>tomcat-embed-websocket</artifactId>
-        <version>11.0.27</version>
+        <version>11.0.29</version>
       </dependency>
 
       <!-- GHSA-rcgg-9c38-7xpx (transitive dependency of hapi-fhir-base and hapi-fhir-server) -->
       <dependency>
         <groupId>io.opentelemetry</groupId>
         <artifactId>opentelemetry-api</artifactId>
-        <version>1.67.0</version>
+        <version>1.68.0</version>
       </dependency>
 
       <!-- GHSA-3653-68v6-rq57 (transitive dependency of hapi-fhir-structures-r4) - we should be careful with this -->
       <dependency>
         <groupId>ca.uhn.hapi.fhir</groupId>
         <artifactId>org.hl7.fhir.r4</artifactId>
-        <version>7.0.5</version>
+        <version>7.0.6</version>
       </dependency>
 
       <dependency>

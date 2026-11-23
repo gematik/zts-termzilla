@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -56,6 +57,9 @@ public class CombiningVsValidateCodeOperation {
 
   private static final String LENIENT_DISPLAY_WARNING_MESSAGE =
       "The provided display is not valid for the code in the CodeSystem. Validation succeeded because 'lenient-display-validation' is true.";
+
+  private static final String VALUESET_UNCLOSED_EXTENSION =
+      "http://hl7.org/fhir/StructureDefinition/valueset-unclosed";
 
   private CombiningVsValidateCodeOperation() {
     // private constructor to prevent instantiation
@@ -123,12 +127,6 @@ public class CombiningVsValidateCodeOperation {
     negativeResult.setMessage("None of the provided Codings is valid in the ValueSet.");
 
     return negativeResult;
-
-    // TODO Fall 4: Es scheint noch den Fall zu geben, dass lediglich ein Code gesetzt wird, ohne
-    // das ein
-    // system angegeben wird. Dann muss das System wohl erraten werden.
-
-    // Wenn keiner der Parameter gesetzt ist, können wir keine Terminologie bestimmen
   }
 
   /**
@@ -226,7 +224,6 @@ public class CombiningVsValidateCodeOperation {
     }
 
     // Laden des inferierten CodeSystems
-    // TODO: müssen wir ggf. auch die Version des CodeSystems inferieren?
     codeSystem = loadCodeSystem(scope, system, systemVersion, combiningTerminologyService);
     // Prüfen, ob das geladene CodeSystem versionNeeded=true gesetzt hat. In diesem Fall
     // wird zwingend eine Version benötigt
@@ -235,10 +232,6 @@ public class CombiningVsValidateCodeOperation {
           "The underlying CodeSystem of the concept to validate is versionAware (versionNeeded = true). "
               + "Please provide a version.");
     }
-
-    // TODO: Wir haben hier noch ein Issue mit SNOMED POCCs, da hier ja die Schreibweise beliebig
-    //  variieren darf. Das muss noch abgefangen werden, bzw. wir machen einfach nochmal nen
-    //  $lookup und bekommen dann die vereinheitlichte Schreibweise
 
     Optional<ValueSet.ValueSetExpansionContainsComponent> match =
         findMatchingExpansionEntry(expansion, codeSystem, system, systemVersion, code);
@@ -451,15 +444,6 @@ public class CombiningVsValidateCodeOperation {
     // Es wurde ein passendes Expansion-Element gefunden, das zum zu prüfenden Konzept passt
     if (match.isPresent()) {
 
-      // TODO: Um die Validierung des Display-Wertes kümmern
-      // TODO: Prüfen gegen Wert aus ValueSet-Expansion
-      // TODO: Prüfen gegen diverse Ausprägungen des Codesystems
-      // TODO: Passenden Display-Wert ermitteln und im Result-Objekt setzen
-      // TODO: Sprache berücksichtigen usw.
-
-      // TODO: Wie sah das nochmal mit den aus der VS-Definition übernommenen Displays aus?
-      //  Display gegen Expansion prüfen
-
       CsValidateCodeParameter csValidateCodeParameter =
           CsValidateCodeParameter.builder()
               .urlParam(new UriType(match.get().getSystem()))
@@ -477,7 +461,6 @@ public class CombiningVsValidateCodeOperation {
       }
 
       // displayLanguage-Parameter berücksichtigen
-      // TODO: Prüfen ob das auch wirklich in den TerminologyManagern korrekt umgesetzt ist
       TokenParam displayLang = vsValidateCodeParameter.getDisplayLanguageParam();
       if (displayLang != null && StringUtils.isNotEmpty(displayLang.getValue())) {
         csValidateCodeParameter.setDisplayLanguageParam(new CodeType(displayLang.getValue()));
@@ -606,14 +589,15 @@ public class CombiningVsValidateCodeOperation {
   }
 
   /**
-   * Erzeugt die ValueSet-Expansion für das angegebene/enthaltene ValueSet
+   * Erzeugt die ValueSet-Expansion für das angegebene oder im Request enthaltene ValueSet.
    *
-   * @param scope
-   * @param vsValidateCodeParameter
-   * @param combiningTerminologyService
-   * @return
-   * @throws UnsupportedTerminologyException
-   * @throws NotImplementedException
+   * @param scope der Scope für die Terminologieoperation
+   * @param vsValidateCodeParameter die Parameter der ValueSet-Validierung
+   * @param combiningTerminologyService der Service zur Erzeugung der Expansion
+   * @return die vollständige ValueSet-Expansion
+   * @throws UnsupportedTerminologyException wenn das ValueSet nicht ermittelt oder
+   *     keine vollständige Expansion erzeugt werden kann
+   * @throws NotImplementedException wenn die angeforderte Funktionalität nicht unterstützt wird
    */
   private static ValueSet.ValueSetExpansionComponent loadExpansion(
       String scope,
@@ -621,17 +605,14 @@ public class CombiningVsValidateCodeOperation {
       CombiningTerminologyService combiningTerminologyService)
       throws UnsupportedTerminologyException, NotImplementedException {
 
-    // TODO: Zahlenbegrenzung sauber implementieren
-    // TODO: Sprachkram und andere Dinge implementieren
+    int maximumCount =
+        combiningTerminologyService.getConfigProperties().getExpansionMaximumCount();
+
     try {
+      VsExpandParameter expandParam;
 
-      VsExpandParameter expandParam = null;
-
-      // Unterscheidung verschiedener Szenarien, wie das ValueSet zu finden ist
       if (vsValidateCodeParameter.getUrl().isPresent()) {
         // Szenario 1: Das ValueSet ist über eine URL referenziert
-
-        // system und version des ValueSets ermitteln
         expandParam =
             VsExpandParameter.builder()
                 .urlParam(
@@ -641,30 +622,88 @@ public class CombiningVsValidateCodeOperation {
                 .valueSetVersionParam(
                     vsValidateCodeParameter.getValueSetVersionParam() != null
                         ? new StringType(
-                            vsValidateCodeParameter.getValueSetVersionParam().getValue())
+                        vsValidateCodeParameter.getValueSetVersionParam().getValue())
                         : null)
-                .countParam(new IntegerType("1000000"))
+                .countParam(new IntegerType(maximumCount))
+                .excludeNestedParam(new BooleanType(true))
                 .build();
 
       } else if (vsValidateCodeParameter.getValueSet().isPresent()) {
         // Szenario 2: Das ValueSet wird im Request übergeben
-
         expandParam =
             VsExpandParameter.builder()
                 .valueSetParam(vsValidateCodeParameter.getValueSetParam())
-                .countParam(new IntegerType("1000000"))
+                .countParam(new IntegerType(maximumCount))
+                .excludeNestedParam(new BooleanType(true))
                 .build();
+
       } else {
         throw new UnsupportedTerminologyException(
             "Unexpected scenario ($validate-code): Unable to discover ValueSet.");
       }
 
-      // ValueSet expandieren und Ergebnise zurückgeben
-      return combiningTerminologyService.expandValueSet(scope, expandParam).getExpansion();
+      ValueSet expanded = combiningTerminologyService.expandValueSet(scope, expandParam);
 
+      return validateExpansion(expanded, maximumCount);
+
+    } catch (UnsupportedTerminologyException e) {
+      throw e;
     } catch (Exception e) {
-      throw new UnsupportedTerminologyException("Expansion of ValueSet failed: " + e.getMessage());
+      throw new UnsupportedTerminologyException(
+          "Expansion of ValueSet failed: " + e.getMessage());
     }
+  }
+
+  /**
+   * Validates that the ValueSet contains a complete, flat expansion suitable
+   * for code membership validation.
+   *
+   * <p>The expansion must contain all concepts, start at offset zero, and
+   * must not exceed the configured maximum count. Each entry must contain
+   * a system and a code without nested concepts. Expansions marked as
+   * unclosed are not supported.
+   *
+   * @param expanded the expanded ValueSet to validate
+   * @param maximumCount the maximum number of concepts allowed in the expansion
+   * @return the validated ValueSet expansion
+   * @throws UnsupportedTerminologyException if the expansion is missing,
+   *     incomplete, or unsuitable for code membership validation
+   */
+  private static ValueSet.ValueSetExpansionComponent validateExpansion(
+      ValueSet expanded, int maximumCount)
+      throws UnsupportedTerminologyException {
+
+    if (expanded == null || !expanded.hasExpansion()) {
+      throw new UnsupportedTerminologyException("ValueSet expansion is missing.");
+    }
+
+    ValueSet.ValueSetExpansionComponent expansion = expanded.getExpansion();
+
+    if (!expansion.hasTotal()
+        || (expansion.hasOffset() && expansion.getOffset() != 0)
+        || expansion.getTotal() != expansion.getContains().size()
+        || expansion.getTotal() > maximumCount
+        || expansion.getContains().stream()
+        .anyMatch(entry -> !entry.hasSystem() || !entry.hasCode() || entry.hasContains())
+        || isUnclosedExpansion(expansion)) {
+
+      throw new UnsupportedTerminologyException(
+          "Cannot validate code against an incomplete ValueSet expansion (maximum count: "
+              + maximumCount
+              + "). A complete, flat expansion is required.");
+    }
+
+    return expansion;
+  }
+
+  /** Detects expansions explicitly marked incomplete by the FHIR R4 unclosed extension. */
+  private static boolean isUnclosedExpansion(ValueSet.ValueSetExpansionComponent expansion) {
+    return expansion.getExtension().stream()
+        .filter(extension -> VALUESET_UNCLOSED_EXTENSION.equals(extension.getUrl()))
+        .anyMatch(extension ->
+            !(extension.getValue() instanceof BooleanType flag)
+                || !flag.hasValue()
+                || flag.booleanValue());
   }
 
   private static CodeSystem loadCodeSystem(

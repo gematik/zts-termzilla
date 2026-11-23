@@ -39,6 +39,7 @@ import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import de.gematik.zts.termzilla.api.exceptions.NotImplementedException;
+import de.gematik.zts.termzilla.common.metadatasearch.helper.model.PropertyFilter;
 import de.gematik.zts.termzilla.common.metadatasearch.lucene.analyzers.AnalyzerUtils;
 import de.gematik.zts.termzilla.common.metadatasearch.lucene.analyzers.FhirStringAnalyzerMultipleToken;
 import java.util.ArrayList;
@@ -217,7 +218,7 @@ public class ConceptQueryGenerator {
    * @throws NotImplementedException if a property value uses an unsupported FHIR type
    */
   public static List<Pair<String, Query>> prepareFindMatchesPropertyQueries(
-      CodeSystem codeSystem, List<PropertyFilter> propertyFilterList, boolean exact)
+          CodeSystem codeSystem, List<PropertyFilter> propertyFilterList, boolean exact)
       throws NotImplementedException {
 
     // Wir müssen die Suchanfragen so feintunen, dass wir case-sensitive und case-insensitive

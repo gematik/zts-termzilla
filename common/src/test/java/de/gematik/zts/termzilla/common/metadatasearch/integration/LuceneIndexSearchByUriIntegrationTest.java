@@ -88,17 +88,7 @@ import org.junit.jupiter.api.Test;
  *   <li>Separate indexing of URL query and path components
  * </ul>
  *
- * <p><b>TODO - Additional Test Cases (to be implemented after REST operation support):</b>
- *
- * <ul>
- *   <li>Test multiple URLs with OR combination (e.g., {@code
- *       ?url=http://example.org/cs1,http://example.org/cs2})
- *   <li>Test multiple URLs with AND combination (multiple {@code url} parameters)
- *   <li>Test URL normalization edge cases (trailing slashes, case sensitivity, URL encoding)
- *   <li>Test :missing modifier for URLs
- *   <li>Test exception handling: verify proper error messages for malformed URIs
- *   <li>Test performance with large number of indexed CodeSystems
- * </ul>
+
  *
  * @see UriParameterQueryGenerator
  * @see ResourceFieldGeneratorHelper

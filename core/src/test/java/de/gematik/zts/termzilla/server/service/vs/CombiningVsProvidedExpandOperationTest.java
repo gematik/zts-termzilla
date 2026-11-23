@@ -20,7 +20,9 @@
  */
 package de.gematik.zts.termzilla.server.service.vs;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -43,8 +45,10 @@ import de.gematik.zts.termzilla.server.service.CombiningTerminologyService;
 import de.gematik.zts.termzilla.terminologies.common.VsExpandPartResult;
 import java.util.List;
 import org.assertj.core.api.Assertions;
+import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.CodeSystem;
+import org.hl7.fhir.r4.model.IntegerType;
 import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.UriType;
 import org.hl7.fhir.r4.model.ValueSet;
@@ -75,6 +79,71 @@ class CombiningVsProvidedExpandOperationTest {
     properties.setSystemLanguage("de-DE");
     properties.setBaseWorkingDir("/tmp/termzilla-test");
     terminologyService = new CombiningTerminologyService(List.of(), properties);
+  }
+
+  @Test
+  void usesConfiguredDefaultAndMaximumCount() {
+    // GIVEN
+    ConfigProperties config = new ConfigProperties();
+    config.setExpansionDefaultCount(7);
+    config.setExpansionMaximumCount(10);
+
+    VsExpandParameter defaultParameters =
+        VsExpandParameter.builder().build();
+
+    VsExpandParameter exceedingParameters =
+        VsExpandParameter.builder()
+            .countParam(new IntegerType(99))
+            .build();
+
+    VsExpandParameter zeroParameters =
+        VsExpandParameter.builder()
+            .countParam(new IntegerType(0))
+            .build();
+
+    VsExpandParameter withinLimitParameters =
+        VsExpandParameter.builder()
+            .countParam(new IntegerType(4))
+            .build();
+
+    // WHEN
+    long defaultCount =
+        CombiningVsProvidedExpandOperation.resolveCount(defaultParameters, config);
+
+    long exceedingCount =
+        CombiningVsProvidedExpandOperation.resolveCount(exceedingParameters, config);
+
+    long zeroCount =
+        CombiningVsProvidedExpandOperation.resolveCount(zeroParameters, config);
+
+    long withinLimitCount =
+        CombiningVsProvidedExpandOperation.resolveCount(withinLimitParameters, config);
+
+    // THEN
+    assertThat(defaultCount).isEqualTo(7);
+    assertThat(exceedingCount).isEqualTo(10);
+    assertThat(zeroCount).isZero();
+    assertThat(withinLimitCount).isEqualTo(4);
+  }
+
+  @Test
+  void rejectsNegativeCount() {
+    // GIVEN
+    ConfigProperties config = new ConfigProperties();
+
+    VsExpandParameter invalidParameters =
+        VsExpandParameter.builder()
+            .countParam(new IntegerType(-1))
+            .build();
+
+    // WHEN
+    Throwable thrown = catchThrowable(() -> CombiningVsProvidedExpandOperation.resolveCount(
+        invalidParameters, config));
+
+    // THEN
+    assertThat(thrown)
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("The 'count' parameter must not be negative.");
   }
 
   @Nested
@@ -162,6 +231,10 @@ class CombiningVsProvidedExpandOperationTest {
       when(manager.vs()).thenReturn(vsSvc);
 
       VsExpandPartResult resA = resultWith(csA, "A1");
+      resA.getConceptBaseInfos().addAll(resultWith(csA, "A2").getConceptBaseInfos());
+      resA.getConceptBaseInfos().addAll(resultWith(csA, "A3").getConceptBaseInfos());
+      resA.getConceptBaseInfos().add(ConceptBaseInfo.builder()
+          .system(csA).version(VERSION).code("inactive").active(false).build());
       VsExpandPartResult resB = resultWith(csB, "B1");
       when(vsSvc.expandInclude(
               Mockito.eq(SCOPE),
@@ -200,6 +273,7 @@ class CombiningVsProvidedExpandOperationTest {
           VsExpandParameter.builder()
               .valueSetParam(vs)
               .excludeSystemParam(List.of(new CanonicalType(csB + "|" + VERSION)))
+              .activeOnlyParam(new BooleanType(true))
               .build();
 
       // WHEN
@@ -207,10 +281,38 @@ class CombiningVsProvidedExpandOperationTest {
           CombiningVsProvidedExpandOperation.expandExplicitValueSet(
               terminologyService, parameters, SCOPE, terminologyService.getLanguageSystemDefault());
 
-      // THEN: only the csA concept remains; csB was removed by exclude-system
+      // THEN: only active csA concepts remain; csB was removed by exclude-system
       org.assertj.core.api.Assertions.assertThat(expanded.getExpansion().getContains())
-          .hasSize(1)
+          .hasSize(3)
           .allSatisfy(c -> Assertions.assertThat(c.getSystem()).isEqualTo(csA));
+      assertThat(expanded.getExpansion().getTotal()).isEqualTo(3);
+
+      // A zero count must still report the total after exclusion and active filtering.
+      parameters.setCountParam(new IntegerType(0));
+      ValueSet totalOnly =
+          CombiningVsProvidedExpandOperation.expandExplicitValueSet(
+              terminologyService, parameters, SCOPE, terminologyService.getLanguageSystemDefault());
+      assertThat(totalOnly.getExpansion().getTotal()).isEqualTo(3);
+      assertThat(totalOnly.getExpansion().getContains()).isEmpty();
+
+      // Verify the configured bounds in the actual expansion pipeline, not only resolveCount.
+      // Production configuration is fixed at startup; invalidate this fixture's old pages.
+      terminologyService.getCacheManager().getExpansionCache().invalidateAll();
+      terminologyService.getConfigProperties().setExpansionDefaultCount(1);
+      terminologyService.getConfigProperties().setExpansionMaximumCount(2);
+      parameters.setCountParam(null);
+      ValueSet defaultPage = CombiningVsProvidedExpandOperation.expandExplicitValueSet(
+          terminologyService, parameters, SCOPE, terminologyService.getLanguageSystemDefault());
+      assertThat(defaultPage.getExpansion().getContains()).hasSize(1);
+      assertThat(defaultPage.getExpansion().getTotal()).isEqualTo(3);
+
+      parameters.setCountParam(new IntegerType(99));
+      parameters.setOffsetParam(new IntegerType(1));
+      ValueSet cappedPage = CombiningVsProvidedExpandOperation.expandExplicitValueSet(
+          terminologyService, parameters, SCOPE, terminologyService.getLanguageSystemDefault());
+      assertThat(cappedPage.getExpansion().getContains()).hasSize(2);
+      assertThat(cappedPage.getExpansion().getTotal()).isEqualTo(3);
+      assertThat(cappedPage.getExpansion().getOffset()).isEqualTo(1);
     }
 
     private VsExpandPartResult resultWith(String system, String code) {
@@ -488,6 +590,58 @@ class CombiningVsProvidedExpandOperationTest {
       // THEN
       verifyExpandIncludeCalls(1, ProcessingContext.stored());
       verifyExpandIncludeCalls(0, ProcessingContext.provided());
+    }
+
+    @Test
+    void sharedDependencyIsNotACycle() throws Exception {
+      // GIVEN
+      String vsCUrl = "http://example.org/fhir/ValueSet/vs-c";
+      String vsDUrl = "http://example.org/fhir/ValueSet/vs-d";
+
+      ValueSet vsA = createValueSetReferencing(VS_A_URL, VS_B_URL);
+      vsA.getCompose().addInclude().addValueSet(vsCUrl + "|" + VERSION);
+
+      registerStoredValueSet(
+          VS_B_URL, createValueSetReferencing(VS_B_URL, vsDUrl));
+      registerStoredValueSet(
+          vsCUrl, createValueSetReferencing(vsCUrl, vsDUrl));
+      registerStoredValueSet(
+          vsDUrl, valueSetWithSystemInclude(vsDUrl));
+
+      VsExpandParameter parameters =
+          VsExpandParameter.builder().valueSetParam(vsA).build();
+
+      // WHEN
+      ValueSet expanded =
+          CombiningVsProvidedExpandOperation.expandExplicitValueSet(
+              terminologyService,
+              parameters,
+              SCOPE,
+              terminologyService.getLanguageSystemDefault());
+
+      // THEN
+      assertThat(expanded.getExpansion().getTotal()).isZero();
+      verifyExpandIncludeCalls(2, ProcessingContext.stored());
+    }
+
+    @Test
+    void rejectsSelfReferenceInExclude() {
+      // GIVEN
+      ValueSet vs = valueSetWithSystemInclude(VS_A_URL);
+      vs.getCompose().addExclude().addValueSet(VS_A_URL + "|" + VERSION);
+
+      VsExpandParameter parameters =
+          VsExpandParameter.builder().valueSetParam(vs).build();
+
+      var languageSystemDefault = terminologyService.getLanguageSystemDefault();
+
+      // WHEN & THEN
+      assertThatThrownBy(
+          () ->
+              CombiningVsProvidedExpandOperation.expandExplicitValueSet(
+                  terminologyService, parameters, SCOPE, languageSystemDefault))
+          .isInstanceOf(InvalidRequestException.class)
+          .hasMessageContaining("Cyclic");
     }
 
     @Test

@@ -2,8 +2,8 @@ fhirterms:
   version: @project.version@
   start: true
   packageFolderLocation: /path/to/package/folder
-  loadDependencies: false
   packageAutoDownloadEnabled: true
+  loadingMode: LENIENT
 
   packageServerConfig:
     servers:

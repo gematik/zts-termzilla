@@ -44,6 +44,7 @@ import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.param.UriParam;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
+import de.gematik.zts.termzilla.api.exceptions.InvalidSearchParameterException;
 import de.gematik.zts.termzilla.api.constants.HttpHeaderConstants;
 import de.gematik.zts.termzilla.api.exceptions.InvalidParameterException;
 import de.gematik.zts.termzilla.api.exceptions.NotImplementedException;
@@ -243,6 +244,8 @@ public class CodeSystemResourceProvider implements IResourceProvider {
           id -> terminologyService.getCodeSystem(scope, id, properties.getResourceRetrievalMode()),
           offsetParam != null ? offsetParam.getValue().intValue() : null,
           countParam != null ? countParam.getValue().intValue() : null);
+    } catch (InvalidSearchParameterException e) {
+      throw new InvalidRequestException(e.getMessage());
     } catch (UnknownScopeException e) {
       log.error("CodeSystem search failed - scope: {}, error: {}", scope, e.getMessage());
       throw new InvalidRequestException(e);

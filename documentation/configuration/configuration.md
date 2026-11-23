@@ -32,6 +32,23 @@ application.yaml, or environment variables.
 | `core.systemLanguage`        | string | `de-DE`    | BCP 47 language code for server-wide default language                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `core.resourceRetrievalMode` | Enum   | `STRIPPED` | Resource retrieval mode for search operations. When set to 'STRIPPED', the server will return only the resource metadata (without the actual content) in search results, which can improve performance and reduce bandwidth usage. Currently, CodeSystem.concept, ValueSet.compose/ValueSet.expansion and ConceptMap.group is stripped. Clients can then retrieve the full resource content using a separate read operation if needed. Set to 'FULL' to include the full resource content in search results. |   
 
+### Terminology scopes and ValueSet expansion limits
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `core.defaultScope` | string | `fhir` | Default scope assigned to terminology providers at startup. The configured name is used in scope-based request URLs. |
+| `core.expansion.defaultCount` | integer | `100` | Default number of concepts in a flat ValueSet expansion page when `count` is omitted. |
+| `core.expansion.maximumCount` | integer | `1000000` | Maximum number of concepts returned in one flat expansion page. Explicit higher counts are capped. |
+
+The default count must not be negative and must not exceed the maximum. The maximum count
+must be positive. A default or explicit `count=0` returns the total without concepts. These
+properties are distinct from the resource search paging settings (`core.paging.*`). They limit the returned page, not the internal cost of
+computing the expansion. Internal ValueSet `$validate-code` requests use the configured maximum;
+if a complete flat expansion cannot be obtained, the validation fails with an operation error
+rather than reporting that the code is invalid. Changes take effect on server restart.
+
+Example startup overrides: `-Dcore.defaultScope=fhir -Dcore.expansion.maximumCount=1000000`.
+
 ### Security Configuration
 
 #### CORS Settings
@@ -538,7 +555,6 @@ fhirterms:
   packageFolderLocation: /path/to/fhir/packages
   additionalResourcesFolderLocation: /path/to/additional/resources
   enrichmentFolderLocation: /path/to/enrichment
-  loadDependencies: false
 
 
   provisionMode: predefined
@@ -571,7 +587,6 @@ Alternatively, use `microprofile-config.properties` or `application.properties`:
 # FHIR Configuration
 fhirterms.start=true
 fhirterms.packageFolderLocation=/path/to/fhir/packages
-fhirterms.loadDependencies=false
 fhirterms.provisionMode=predefined
 fhirterms.provisionSettingsPath=/path/to/provision-settings.yaml
 # LOINC Configuration
@@ -597,7 +612,6 @@ Environment variables use uppercase with underscores:
 # FHIR Configuration
 export FHIRTERMS_START=true
 export FHIRTERMS_PACKAGEFOLDERLOCATION=/path/to/fhir/packages
-export FHIRTERMS_LOADDEPENDENCIES=false
 export FHIRTERMS_PROVISIONMODE=predefined
 
 # LOINC Configuration
@@ -639,8 +653,8 @@ export SNOMED_RESTRICTEDMODE=true
 | `fhirterms.packageFolderLocation`             | string  | *required*   | Path to FHIR package directory                                    |
 | `fhirterms.additionalResourcesFolderLocation` | string  | *(optional)* | Path to additional FHIR resources                                 |
 | `fhirterms.enrichmentFolderLocation`          | string  | *(optional)* | Path to enrichment resources                                      |
-| `fhirterms.loadDependencies`                  | boolean | `false`      | Load package dependencies                                         |
 | `fhirterms.packageAutoDownloadEnabled`        | boolean | `false`      | Enable automatic package download from configured package servers |
+| `fhirterms.loadingMode`                       | enum    | `LENIENT`    | `LENIENT`: warn and skip Resources failing quality checks; `STRICT`: abort loading with an exception |
 | `fhirterms.provisionMode`                     | enum    | `PREDEFINED` | Default provision mode: `PREDEFINED` or `SUPPORTED`               |
 | `fhirterms.provisionSettingsPath`             | string  | *(optional)* | Path to provision settings YAML file                              |
 

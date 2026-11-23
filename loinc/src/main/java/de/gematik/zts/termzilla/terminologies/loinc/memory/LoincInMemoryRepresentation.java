@@ -553,69 +553,47 @@ public class LoincInMemoryRepresentation {
     versionMap.put(loincVersion.getVersionString(), loincVersion);
   }
 
-  // --------------------------------------------------------------------------------------------
-  // TODO: PROBLEM: If an entry changes and later reverts back, the current logic can still break.
-  //  Ideally, the most recently changed entry should always be selected. Concepts should be less
-  //  affected due to the getVersionLastChanged field.
-  // --------------------------------------------------------------------------------------------
-
   /**
-   * Adds a concept version to the index if an equivalent version is not already present.
+   * Adds a concept version when its content differs from the latest loaded version.
+   * Release files must be loaded in chronological order.
    *
    * @param conceptVersion concept version to add
    */
   public void addConcept(ConceptVersion conceptVersion) {
-
-    // Determine all identical concept versions
-    Set<ConceptVersion> existingConcepts =
+    Optional<ConceptVersion> latestConcept =
         loincNumberToConceptVersionMap.get(conceptVersion.getLoincNum()).stream()
-            .filter(
-                existingConcept ->
-                    existingConcept
-                        .getVersionLastChanged()
-                        .equals(conceptVersion.getVersionLastChanged()))
-            .collect(Collectors.toSet());
+            .max(Comparator.comparing(ConceptVersion::getValidFromVersion));
 
-    // Add concept version only if no identical entry exists
-    if (existingConcepts.isEmpty()) {
+    // Only compare with the latest state: A -> B -> A must retain both transitions.
+    if (latestConcept.filter(conceptVersion::equals).isEmpty()) {
       conceptVersionList.add(conceptVersion);
       loincNumberToConceptVersionMap.put(conceptVersion.getLoincNum(), conceptVersion);
     }
   }
 
-  // --------------------------------------------------------------------------------------------
-
   /**
-   * Adds a part version to the index if an equivalent version is not already present.
+   * Adds a part version when its content differs from the latest loaded version.
    *
    * @param partVersion part version to add
    */
   public void addPart(PartVersion partVersion) {
 
-    // TODO: PROBLEM: see note above - maybe already addressed via map handling
-
-    // Determine all identical part versions
-    Set<PartVersion> existingParts =
+    Optional<PartVersion> latestPart =
         partNumberToPartVersionMap.get(partVersion.getPartNumber()).stream()
-            .sorted(Comparator.comparing(PartVersion::getValidFromVersion))
-            .collect(
-                Collectors.toMap(
-                    PartVersion::getPartNumber, // key extraction
-                    obj -> obj, // value mapping (identity)
-                    (existing, replacement) ->
-                        replacement // Collision handling: keep replacement object
-                    ))
-            .values()
-            .stream()
-            .filter(existingPart -> existingPart.equals(partVersion))
-            .collect(Collectors.toSet());
+            .reduce(LoincInMemoryRepresentation::latestPartVersion);
 
-    // Add part version only if no identical entry exists
-    if (existingParts.isEmpty()) {
+    // Compare only with the latest state, not with all historical states.
+    if (latestPart.filter(partVersion::equals).isEmpty()) {
       partVersionList.add(partVersion);
       partNumberToPartVersionMap.put(partVersion.getPartNumber(), partVersion);
       partNameToPartVersionMap.put(partVersion.getPartName(), partVersion);
     }
+  }
+
+  /** Selects the later release, or the last loaded entry within the same release. */
+  private static PartVersion latestPartVersion(PartVersion existing, PartVersion replacement) {
+    return existing.getValidFromVersion() > replacement.getValidFromVersion()
+        ? existing : replacement;
   }
 
   /**
@@ -1011,11 +989,12 @@ public class LoincInMemoryRepresentation {
         // The last element in the stream is the matching concept version
         .collect(
             Collectors.toMap(
-                ConceptVersion::getLoincNum, // key extraction
-                obj -> obj, // value mapping (identity)
+                ConceptVersion::getLoincNum,
+                obj -> obj,
                 (existing, replacement) ->
-                    replacement // collision handling (use replacement object)
-                ))
+                    existing.getValidFromVersion() >= replacement.getValidFromVersion()
+                        ? existing
+                        : replacement))
         .values()
         .stream()
         .toList();
@@ -1046,7 +1025,7 @@ public class LoincInMemoryRepresentation {
     return partNumberToPartVersionMap.get(partNum).stream()
         .filter(partVersion -> partVersion.getValidFromVersion() <= version.getVersionNumber())
         // The last element in the stream is the matching part version
-        .max(Comparator.comparing(PartVersion::getValidFromVersion));
+        .reduce(LoincInMemoryRepresentation::latestPartVersion);
   }
 
   /**
@@ -1060,7 +1039,7 @@ public class LoincInMemoryRepresentation {
     return partNameToPartVersionMap.get(partName).stream()
         .filter(partVersion -> partVersion.getValidFromVersion() <= version.getVersionNumber())
         // The last element in the stream is the matching part version
-        .max(Comparator.comparing(PartVersion::getValidFromVersion));
+        .reduce(LoincInMemoryRepresentation::latestPartVersion);
   }
 
   // ==============================================================================

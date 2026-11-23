@@ -60,6 +60,29 @@ public final class FhirSearchHelper {
   }
 
   /**
+   * Adds exact metadata filters for resource type and logical resource IDs.
+   *
+   * @param filterQueryList the list to which the resource type and ID filters are added
+   * @param resourceType the exact resource type to match, or {@code null} to omit this filter
+   * @param idPreFilter the logical resource IDs to match using OR logic, or {@code null} or empty
+   *     to omit the ID filter
+   */
+  private static void addResourceTypeAndIdFilters(
+      List<Query> filterQueryList, String resourceType, List<IdType> idPreFilter) {
+    if (resourceType != null) {
+      filterQueryList.add(new TermQuery(new Term(RESOURCE_TYPE_FIELD, resourceType)));
+    }
+
+    if (idPreFilter != null && !idPreFilter.isEmpty()) {
+      List<Query> idFilterQueryList = new ArrayList<>();
+      for (IdType idType : idPreFilter) {
+        idFilterQueryList.add(new TermQuery(new Term(RESOURCE_ID_FIELD, idType.getIdPart())));
+      }
+      filterQueryList.add(QueryCombinators.prepareOrQuery(idFilterQueryList));
+    }
+  }
+
+  /**
    * Builds a Lucene filter query combining scope, provision mode ({@code PREDEFINED}), optional
    * resource type, and optional ID pre-filter conditions.
    *
@@ -81,25 +104,7 @@ public final class FhirSearchHelper {
     filterQueryList.add(
         new TermQuery(new Term(NAME_PROVISION_MODE, ProvisionMode.PREDEFINED.name())));
 
-    // Filter by resource type (e.g., CodeSystem, ValueSet)
-    if (resourceType != null) {
-      // TODO: Check whether we should better generate the query using some of the custom
-      //  QueryGenerartor classes
-      filterQueryList.add(new TermQuery(new Term(RESOURCE_TYPE_FIELD, resourceType)));
-    }
-
-    // Filter by ID pre-filter, if provided and non-empty
-    if (idPreFilter != null && !idPreFilter.isEmpty()) {
-
-      List<Query> idFilterQueryList = new ArrayList<>();
-      for (IdType idType : idPreFilter) {
-        // TODO: Check whether we should better generate the query using some of the custom
-        //  QueryGenerartor classes
-        idFilterQueryList.add(new TermQuery(new Term(RESOURCE_ID_FIELD, idType.getIdPart())));
-      }
-
-      filterQueryList.add(QueryCombinators.prepareOrQuery(idFilterQueryList));
-    }
+    addResourceTypeAndIdFilters(filterQueryList, resourceType, idPreFilter);
 
     return QueryCombinators.prepareFilterQuery(filterQueryList);
   }
@@ -126,25 +131,7 @@ public final class FhirSearchHelper {
     // Filter by scope (tenant ID)
     filterQueryList.add(new TermQuery(new Term(NAME_SCOPE, scope)));
 
-    // Filter by resource type (e.g., CodeSystem, ValueSet)
-    if (resourceType != null) {
-      // TODO: Check whether we should better generate the query using some of the custom
-      //  QueryGenerartor classes
-      filterQueryList.add(new TermQuery(new Term(RESOURCE_TYPE_FIELD, resourceType)));
-    }
-
-    // Filter by ID pre-filter, if provided and non-empty
-    if (idPreFilter != null && !idPreFilter.isEmpty()) {
-
-      List<Query> idFilterQueryList = new ArrayList<>();
-      for (IdType idType : idPreFilter) {
-        // TODO: Check whether we should better generate the query using some of the custom
-        //  QueryGenerartor classes
-        idFilterQueryList.add(new TermQuery(new Term(RESOURCE_ID_FIELD, idType.getIdPart())));
-      }
-
-      filterQueryList.add(QueryCombinators.prepareOrQuery(idFilterQueryList));
-    }
+    addResourceTypeAndIdFilters(filterQueryList, resourceType, idPreFilter);
 
     return QueryCombinators.prepareFilterQuery(filterQueryList);
   }

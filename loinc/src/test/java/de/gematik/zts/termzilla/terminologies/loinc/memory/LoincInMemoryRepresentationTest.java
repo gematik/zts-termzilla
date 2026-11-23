@@ -269,7 +269,7 @@ class LoincInMemoryRepresentationTest {
   class ConceptMethodsTests {
 
     @Test
-    @DisplayName("Should avoid duplicate concepts with same LOINC number and VersionLastChanged")
+    @DisplayName("Should avoid duplicate concepts with identical content")
     void shouldAvoidDuplicateConcepts(@TempDir Path tempDir) throws InvalidConfigurationException {
       // GIVEN
       LoincInMemoryRepresentation subject = createSubject(tempDir);
@@ -283,8 +283,60 @@ class LoincInMemoryRepresentationTest {
 
       // THEN
       assertThat(concepts)
-          .as("Concepts with same VersionLastChanged are treated as duplicates")
+          .as("Identical concept content is stored only once")
           .containsExactly(conceptVersion);
+    }
+
+    @Test
+    void shouldRetainConceptReversionAndSkipUnchangedSnapshot(@TempDir Path tempDir)
+        throws InvalidConfigurationException {
+      LoincInMemoryRepresentation subject = createSubject(tempDir);
+      ConceptVersion first =
+          LoincInMemoryRepresentationTestDataHelper.conceptVersion("1234-5", "2.66", 266);
+      ConceptVersion changed =
+          LoincInMemoryRepresentationTestDataHelper.conceptVersion("1234-5", "2.67", 267);
+      ConceptVersion reverted =
+          LoincInMemoryRepresentationTestDataHelper.conceptVersion("1234-5", "2.66", 268);
+      ConceptVersion unchanged =
+          LoincInMemoryRepresentationTestDataHelper.conceptVersion("1234-5", "2.66", 269);
+      first.setLongCommonName("A");
+      changed.setLongCommonName("B");
+      reverted.setLongCommonName("A");
+      unchanged.setLongCommonName("A");
+      subject.addConcept(first);
+      subject.addConcept(changed);
+      subject.addConcept(reverted);
+      subject.addConcept(unchanged);
+
+      assertThat(subject.getConceptVersionListByLoincNumber("1234-5"))
+          .containsExactly(first, changed, reverted);
+      for (int release : new int[] {266, 267, 268, 269}) {
+        LoincVersion version =
+            LoincInMemoryRepresentationTestDataHelper.loincVersion(release, "2." + (release - 200));
+        ConceptVersion expected = release == 266 ? first : release == 267 ? changed : reverted;
+        assertThat(subject.getConceptVersion("1234-5", version).orElseThrow()).isSameAs(expected);
+        assertThat(subject.getConceptVersionList(version)).containsExactly(expected);
+      }
+    }
+
+    @Test
+    void shouldRetainChangedContentWithSameVersionLastChanged(@TempDir Path tempDir)
+        throws InvalidConfigurationException {
+      LoincInMemoryRepresentation subject = createSubject(tempDir);
+      ConceptVersion first =
+          LoincInMemoryRepresentationTestDataHelper.conceptVersion("1234-5", "2.66", 266);
+      ConceptVersion changed =
+          LoincInMemoryRepresentationTestDataHelper.conceptVersion("1234-5", "2.66", 267);
+      first.setLongCommonName("A");
+      changed.setLongCommonName("B");
+      subject.addConcept(first);
+      subject.addConcept(changed);
+
+      assertThat(
+              subject.getConceptVersion(
+                  "1234-5",
+                  LoincInMemoryRepresentationTestDataHelper.loincVersion(267, "2.67")))
+          .contains(changed);
     }
 
     @Test
@@ -362,6 +414,32 @@ class LoincInMemoryRepresentationTest {
     }
 
     @Test
+    void shouldRetainPartReversion(@TempDir Path tempDir) throws InvalidConfigurationException {
+      LoincInMemoryRepresentation subject = createSubject(tempDir);
+      PartVersion first =
+          LoincInMemoryRepresentationTestDataHelper.partVersion(
+              "LP1-1", "COMPONENT", "Part Name", "A", "ACTIVE", 266);
+      PartVersion changed =
+          LoincInMemoryRepresentationTestDataHelper.partVersion(
+              "LP1-1", "COMPONENT", "Part Name", "B", "ACTIVE", 267);
+      PartVersion reverted =
+          LoincInMemoryRepresentationTestDataHelper.partVersion(
+              "LP1-1", "COMPONENT", "Part Name", "A", "ACTIVE", 268);
+      subject.addPart(first);
+      subject.addPart(changed);
+      subject.addPart(reverted);
+
+      assertThat(subject.getPartVersionListByPartNumber("LP1-1"))
+          .containsExactly(first, changed, reverted);
+      LoincVersion version =
+          LoincInMemoryRepresentationTestDataHelper.loincVersion(268, "2.68");
+      assertThat(subject.getPartVersionByPartNumber("LP1-1", version).orElseThrow())
+          .isSameAs(reverted);
+      assertThat(subject.getPartVersionByPartName("Part Name", version).orElseThrow())
+          .isSameAs(reverted);
+    }
+
+    @Test
     @DisplayName("Should mark hierarchy-only parts as NOT_IN_PART_FILE")
     void shouldMarkHierarchyOnlyPartAsNotInPartFile(@TempDir Path tempDir)
         throws InvalidConfigurationException {
@@ -420,6 +498,34 @@ class LoincInMemoryRepresentationTest {
                           PartVersion::getPartDisplayName,
                           PartVersion::getStatus)
                       .containsExactly("COMPONENT", "Stable Name", "Stable Display", "INACTIVE"));
+    }
+
+    @Test
+    void shouldPreferPartChangeSnapshotWithinSameRelease(@TempDir Path tempDir)
+        throws InvalidConfigurationException {
+      LoincInMemoryRepresentation subject = createSubject(tempDir);
+      PartVersion active =
+          LoincInMemoryRepresentationTestDataHelper.partVersion(
+              "LP3-3", "COMPONENT", "Stable Name", "Stable Display", "ACTIVE", 266);
+      PartVersion snapshot =
+          LoincInMemoryRepresentationTestDataHelper.partVersion(
+              "LP3-3", "UNKNOWN", "Ignored", "Ignored", "INACTIVE", 266);
+      subject.addPart(active);
+      subject.addPartChangeSnapshot(snapshot);
+
+      LoincVersion version =
+          LoincInMemoryRepresentationTestDataHelper.loincVersion(266, "2.66");
+      assertThat(subject.getPartVersionByPartNumber("LP3-3", version).orElseThrow())
+          .isSameAs(snapshot);
+      assertThat(subject.getPartVersionByPartName("Stable Name", version).orElseThrow())
+          .isSameAs(snapshot);
+
+      PartVersion unchanged =
+          LoincInMemoryRepresentationTestDataHelper.partVersion(
+              "LP3-3", "COMPONENT", "Stable Name", "Stable Display", "INACTIVE", 267);
+      subject.addPart(unchanged);
+      assertThat(subject.getPartVersionListByPartNumber("LP3-3"))
+          .containsExactly(active, snapshot);
     }
 
     @Test
@@ -747,6 +853,30 @@ class LoincInMemoryRepresentationTest {
       assertThat(selected)
           .as("Latest version should be selected for requested LOINC version")
           .contains(changedVersion);
+    }
+
+    @Test
+    void shouldRetainStatusOnlyAnswerListChange(@TempDir Path tempDir)
+        throws InvalidConfigurationException {
+      LoincInMemoryRepresentation subject = createSubject(tempDir);
+      AnswerListVersion active =
+          LoincInMemoryRepresentationTestDataHelper.answerListVersion(
+              "LL1-1", "List Name", "ACTIVE", 266, Set.of("LA1-1"));
+      AnswerListVersion inactive =
+          LoincInMemoryRepresentationTestDataHelper.answerListVersion(
+              "LL1-1", "List Name", "INACTIVE", 267, Set.of("LA1-1"));
+      subject.addAnswerList(active);
+      subject.addAnswerListsForCurrentVersion(Map.of("LL1-1", inactive));
+
+      assertThat(subject.getAnswerListVersionListByAnswerListId("LL1-1"))
+          .containsExactly(active, inactive);
+      assertThat(
+              subject
+                  .getAnswerListVersion(
+                      "LL1-1", LoincInMemoryRepresentationTestDataHelper.loincVersion(267, "2.67"))
+                  .orElseThrow()
+                  .getStatus())
+          .isEqualTo("INACTIVE");
     }
 
     @Test
